@@ -9,7 +9,7 @@ Add `:phoenix_ddos` to your list of dependencies in `mix.exs`:
 def deps do
   [
     {:phoenix_ddos, "~> 0.7"},
-    # Highly recommanded, this will makes sure we get the correct remote_ip in Conn
+    # Highly recommended, this will makes sure we get the correct remote_ip in Conn
     {:remote_ip, "~> 1.1"}
   ]
 end
@@ -17,7 +17,7 @@ end
 
 ## Usage
 
-Add the `PhoenixDDOS` plug to your app's plug pipeline, along with the amazing `RemoteIp` (optional but highly recommanded !)
+Add the `PhoenixDDOS` plug to your app's plug pipeline, along with the amazing `RemoteIp` (optional but highly recommended !).
 
 
 ```elixir
