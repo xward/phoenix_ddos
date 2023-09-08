@@ -1,18 +1,18 @@
-defmodule PhoenixDdos do
+defmodule PhoenixDDOS do
   @moduledoc """
-  Documentation for `PhoenixDdos`.
+  Documentation for `PhoenixDDOS`.
   """
 
-  @doc """
-  Hello world.
+  @behaviour Plug
 
-  ## Examples
-
-      iex> PhoenixDdos.hello()
-      :world
-
-  """
-  def hello do
-    :world
+  @impl Plug
+  def init(opts) do
+    opts
   end
+
+  @impl Plug
+  def call(conn, _opts) do
+    conn
+  end
+
 end
