@@ -7,8 +7,7 @@ defmodule PhoenixDDOSTest do
   describe "call/2" do
     test "ddos from same ip" do
       peer = {86, 75, 30, 9}
-      head = []
-      conn = %Plug.Conn{remote_ip: peer, req_headers: head}
+      conn = %Plug.Conn{remote_ip: peer}
 
       1..12
       |> Enum.each(fn i ->
@@ -32,6 +31,6 @@ defmodule PhoenixDDOSTest do
 
   defp assert_rejected(conn) do
     assert conn.halted
-    assert conn.status == 429
+    assert conn.status == Application.get_env(:phoenix_ddos, :http_code_on_reject, 429)
   end
 end

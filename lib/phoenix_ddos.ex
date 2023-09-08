@@ -3,35 +3,41 @@ defmodule PhoenixDDOS do
   Documentation for `PhoenixDDOS`.
   """
 
-  alias PhoenixDDDOS.Parser
-
   import Plug.Conn
+  alias PhoenixDDOS.IpCheck
 
   @behaviour Plug
 
   @impl Plug
-  def init(opts) do
-    Cachex.start_link(name: :phoenix_ddos)
-
-    opts
-  end
+  def init(opts), do: opts
 
   @impl Plug
   def call(conn, _opts) do
-    ip = conn.remote_ip |> :inet.ntoa()
-
-    {:ok, new_number} = Cachex.incr(:phoenix_ddos_store, "#{ip}_count")
-
-    if new_number == 1 do
-      {:ok, true} = Cachex.expire(:phoenix_ddos_store, "#{ip}_count", :timer.seconds(60))
-    end
-
-    if new_number > 10 do
-      # IO.puts("boom")
-      # 429 Too Many Requests
-      conn |> put_status(429) |> halt()
-    else
+    with :cont <- IpCheck.check(conn) do
       conn
+    else
+      _ -> reject(conn)
     end
+  end
+
+  defp reject(%Plug.Conn{} = conn) do
+    cond do
+      config(:raise_on_reject, false) ->
+        raise "PhoenixDDOS: too much request"
+
+      true ->
+        conn |> put_status(config(:http_code_on_reject, 429)) |> halt()
+    end
+  end
+
+  def stats do
+    # show leaderboard of most spammy ip
+    # reject conn count
+
+    IO.puts("stats here")
+  end
+
+  defp config(key, default \\ nil) do
+    Application.get_env(:phoenix_ddos, key, default)
   end
 end

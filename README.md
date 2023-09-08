@@ -34,13 +34,18 @@ defmodule MyApp.Endpoint do
 end
 ```
 
+## Configuration
+
+
+
 
 ## Motivation
 
-add a layer of protection within your phoenix application
+Add layer of protection within your phoenix application. Multi-layered DDoS protection is the best protection !
 
 you don't always have access to a ddos protection in between internet and your phoenix application
 You want advance ddos feature you can't have outside an applicative environment
+
 
 
 ## Configuration
