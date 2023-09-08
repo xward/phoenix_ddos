@@ -1,4 +1,4 @@
-defmodule PhoenixDdos.MixProject do
+defmodule PhoenixDDOS.MixProject do
   use Mix.Project
 
   def project do
@@ -14,6 +14,7 @@ defmodule PhoenixDdos.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
+      mod: {PhoenixDDOS.Application, []},
       extra_applications: [:logger]
     ]
   end
@@ -22,6 +23,7 @@ defmodule PhoenixDdos.MixProject do
   defp deps do
     [
       {:plug, "~> 1.14"},
+      {:cachex, "~> 3.6"},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false}
     ]
   end
