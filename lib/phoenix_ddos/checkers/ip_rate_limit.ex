@@ -3,15 +3,13 @@ defmodule PhoenixDDOS.IpRateLimit do
   check if an ip ddos
   """
 
-  alias PhoenixDDOS.Cache
-  alias PhoenixDDOS.Config
+  use PhoenixDDOS.Checker
 
   def check({reject, request}) do
     {__MODULE__
      |> Config.get!()
      |> Enum.reduce(reject, fn {id, window_ms, count}, acc ->
-
-       Cache.incr_check(  "ip_#{id}_#{request.ip}", window_ms, count) || acc
+       Cache.incr_check("ip_#{id}_#{request.ip}", window_ms, count) || acc
      end), request}
   end
 
@@ -22,5 +20,3 @@ defmodule PhoenixDDOS.IpRateLimit do
      Keyword.get(cfg, :allowed)}
   end
 end
-
-{:ok, [{"RoMC", 60000, 500}]}

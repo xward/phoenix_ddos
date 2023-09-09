@@ -12,27 +12,26 @@ defmodule PhoenixDDOS.Config do
       PhoenixDDOS.IpRateLimit,
       PhoenixDDOS.IpRateLimitPerRequestPath
     ]
-    |> Enum.each(fn mod ->
+    |> Enum.each(fn module ->
       Cachex.put(
         :phoenix_ddos_config,
-        mod,
-        mod
+        module,
+        module
         |> fetch()
-        |> Enum.map(fn {_, cfg} -> mod.prepare_config(cfg) end)
+        |> Enum.map(fn {_, cfg} -> module.prepare_config(cfg) end)
         |> List.flatten()
       )
     end)
   end
 
-  def get!(key) do
-    {:ok, cfg} = Cachex.get(:phoenix_ddos_config, key)
+  def get!(module) do
+    {:ok, cfg} = Cachex.get(:phoenix_ddos_config, module)
     cfg
   end
 
   def rand_id do
     :crypto.strong_rand_bytes(3) |> Base.encode64()
   end
-
 
   def period_to_msec({n, :second}), do: n * 1_000
   def period_to_msec({n, :minute}), do: n * 60_000

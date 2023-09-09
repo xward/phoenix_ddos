@@ -24,20 +24,19 @@ defmodule PhoenixDDOS do
 
   # returns :cont or :reject
   defp observe(conn) do
-    {false, conn |> parse_conn()}
+    {
+      false,
+      %{
+        ip: conn.remote_ip |> :inet.ntoa(),
+        request_path: conn.request_path
+      }
+    }
     |> PhoenixDDOS.IpRateLimit.check()
     |> PhoenixDDOS.IpRateLimitPerRequestPath.check()
     |> case do
       {false, _} -> :cont
       {true, _} -> :reject
     end
-  end
-
-  defp parse_conn(conn) do
-    %{
-      ip: conn.remote_ip |> :inet.ntoa(),
-      request_path: conn.request_path
-    }
   end
 
   def stats do
