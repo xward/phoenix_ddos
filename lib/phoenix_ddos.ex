@@ -4,6 +4,7 @@ defmodule PhoenixDDOS do
   """
 
   alias PhoenixDDOS.Dredd
+  alias PhoenixDDOS.Jail
 
   @behaviour Plug
 
@@ -13,6 +14,9 @@ defmodule PhoenixDDOS do
   @impl Plug
   if Application.compile_env(:phoenix_ddos, :enable) do
     def call(%Plug.Conn{} = conn, _opts) do
+
+      # Jail
+
       case observe(conn) do
         :cont -> conn
         :reject -> Dredd.reject(conn)

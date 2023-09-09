@@ -21,6 +21,10 @@ defmodule PhoenixDDOS.Supervisor do
       %{
         id: :phoenix_ddos_config,
         start: {Cachex, :start_link, [:phoenix_ddos_config, []]}
+      },
+      %{
+        id: :phoenix_ddos_jail,
+        start: {Cachex, :start_link, [:phoenix_ddos_jail, []]}
       }
     ]
 

@@ -3,7 +3,7 @@ defmodule PhoenixDDOS.IpRateLimitPerRequestPath do
   check if an ip ddos on specific paths
   """
 
-  use PhoenixDDOS.Checker
+  use PhoenixDDOS.Protection
 
   def check({reject, request}) do
     {__MODULE__

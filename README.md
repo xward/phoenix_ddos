@@ -49,7 +49,8 @@ config :phoenix_ddos,
 
 | Option               | Default                | Description                                                               |
 | :------------------- | :--------------------- | :------------------------------------------------------------------------ |
-| enable               |      true              | set to false to disable                                                   |
+| enable               |      true   (@compil)  | set to false to disable                                                   |
+| jail_time_minutes    |      5      (@compil)  | time an ip is fully blocked if caught by a protection                     |
 | raise_on_reject      |     false              | raise when we reject a connexion intead of returning an http code error   |
 | http_code_on_reject  |       429              | http code returned when we reject a connexion                             |
 | protections          | mandatory              | @see protections configuration                                            |
@@ -66,7 +67,12 @@ You want advance ddos feature you can't have outside an applicative environment
 
 # Protections configuration
 
-## period syntax
+
+## Ip jail
+
+All protections that trigger a deny of an ip will push said ip into jail.
+Jail default duration is 5min, configurable.
+You can also configure this time per protection, 0 is a valide configuration and disable jail mecanic from this protection.
 
 
 ## `PhoenixDDOS.IpRateLimit`
@@ -104,3 +110,11 @@ You want advance ddos feature you can't have outside an applicative environment
     request_paths: ["/graphiql"], allowed: 20, period: {1, :minute}}
   ]
 ```
+
+## period syntax example
+
+period: {30, :second}
+period: {1, :minute}
+period: {2, :minute}
+period: {1, :hour}
+period: {1, :day}
