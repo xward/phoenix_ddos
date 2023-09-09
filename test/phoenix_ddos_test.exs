@@ -16,6 +16,24 @@ defmodule PhoenixDDOSTest do
       run_ddos(conn, 10)
     end
 
+    test "IpRateLimit bench" do
+      configure_protections([
+        {PhoenixDDOS.IpRateLimit, allowed: 10_000, period: {2, :second}},
+        {PhoenixDDOS.IpRateLimitPerRequestPath,
+         request_paths: ["/admin"], allowed: 3, period: {1, :minute}}
+      ])
+
+      peer = {86, 75, 30, 9}
+      conn = %Plug.Conn{remote_ip: peer}
+
+      start = DateTime.utc_now()
+      run_ddos(conn, 10_000)
+      diff = DateTime.diff(DateTime.utc_now(), start, :millisecond)
+
+      # ~ 30ms per 10k
+      assert diff < 100
+    end
+
     test "IpRateLimitPerRequestPath" do
       configure_protections([
         {PhoenixDDOS.IpRateLimitPerRequestPath,

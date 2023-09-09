@@ -14,7 +14,7 @@ defmodule PhoenixDDOS.Dredd do
     end
   end
 
-  defp config(key, default \\ nil) do
+  defp config(key, default) do
     Application.get_env(:phoenix_ddos, key, default)
   end
 end

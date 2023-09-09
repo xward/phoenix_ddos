@@ -33,14 +33,15 @@ defmodule PhoenixDDOS.Config do
     :crypto.strong_rand_bytes(3) |> Base.encode64()
   end
 
+
+  def period_to_msec({n, :second}), do: n * 1_000
+  def period_to_msec({n, :minute}), do: n * 60_000
+  def period_to_msec({n, :hour}), do: n * 3_600_000
+  def period_to_msec({n, :day}), do: n * 24 * 3_600_000
+  def period_to_msec(period), do: raise("Invalid configuration period #{period}")
+
   defp fetch(module) do
     Application.get_env(:phoenix_ddos, :protections)
     |> Enum.filter(fn {mod, _} -> mod == module end)
   end
-
-  # {1, :minute} to 60_000
-  def period_to_msec({n, :second}), do: n * 1_000
-  def period_to_msec({n, :minute}), do: n * 60_000
-  def period_to_msec({n, :hour}), do: n * 3_600_000
-  def period_to_msec(period), do: raise("Invalid configuration period #{period}")
 end

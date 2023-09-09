@@ -13,9 +13,15 @@ defmodule PhoenixDDOS.Supervisor do
 
   def init(_config) do
     children = [
-      worker(Cachex, [:phoenix_ddos_store, []], id: :phoenix_ddos_store),
+      %{
+        id: :phoenix_ddos_store,
+        start: {Cachex, :start_link, [:phoenix_ddos_store, []]}
+      },
       # only local
-      worker(Cachex, [:phoenix_ddos_config, []], id: :phoenix_ddos_config)
+      %{
+        id: :phoenix_ddos_config,
+        start: {Cachex, :start_link, [:phoenix_ddos_config, []]}
+      }
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
