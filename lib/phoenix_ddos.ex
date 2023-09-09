@@ -3,7 +3,6 @@ defmodule PhoenixDDOS do
   Documentation for `PhoenixDDOS`
   """
 
-  alias PhoenixDDOS.IpCheck
   alias PhoenixDDOS.Dredd
 
   @behaviour Plug
@@ -12,12 +11,33 @@ defmodule PhoenixDDOS do
   def init(opts), do: opts
 
   @impl Plug
-  def call(conn, _opts) do
-    with :cont <- IpCheck.check(conn) do
-      conn
-    else
-      _ -> Dredd.reject(conn)
+  if Application.compile_env(:phoenix_ddos, :enable) do
+    def call(%Plug.Conn{} = conn, _opts) do
+      case observe(conn) do
+        :cont -> conn
+        :reject -> Dredd.reject(conn)
+      end
     end
+  else
+    def call(conn, _opts), do: conn
+  end
+
+  # returns :cont or :reject
+  defp observe(conn) do
+    {false, conn |> parse_conn()}
+    |> PhoenixDDOS.IpRateLimit.check()
+    |> PhoenixDDOS.IpRateLimitPerRequestPath.check()
+    |> case do
+      {false, _} -> :cont
+      {true, _} -> :reject
+    end
+  end
+
+  defp parse_conn(conn) do
+    %{
+      ip: conn.remote_ip |> :inet.ntoa(),
+      request_path: conn.request_path
+    }
   end
 
   def stats do

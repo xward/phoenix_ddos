@@ -3,6 +3,7 @@
 import Config
 
 config :phoenix_ddos,
-  ip_rate_limit: {60, 10},
+  enable: true,
   raise_on_reject: false,
-  http_code_on_reject: 421
+  http_code_on_reject: 421,
+  protections: []

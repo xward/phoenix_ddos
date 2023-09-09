@@ -6,6 +6,9 @@ defmodule PhoenixDDOS.Application do
 
   def start(_type, _args) do
     config = %{}
-    PhoenixDDOS.Supervisor.start_link(config, name: PhoenixDDOS.Supervisor)
+    link = PhoenixDDOS.Supervisor.start_link(config, name: PhoenixDDOS.Supervisor)
+
+    PhoenixDDOS.Config.init()
+    link
   end
 end
