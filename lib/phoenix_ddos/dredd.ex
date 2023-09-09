@@ -5,12 +5,10 @@ defmodule PhoenixDDOS.Dredd do
   import Plug.Conn
 
   def reject(%Plug.Conn{} = conn) do
-    cond do
-      config(:raise_on_reject, false) ->
-        raise "PhoenixDDOS: too much request"
-
-      true ->
-        conn |> put_status(config(:http_code_on_reject, 429)) |> halt()
+    if config(:raise_on_reject, false) do
+      raise "PhoenixDDOS: too much request"
+    else
+      conn |> put_status(config(:http_code_on_reject, 429)) |> halt()
     end
   end
 

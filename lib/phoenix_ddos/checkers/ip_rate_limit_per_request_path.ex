@@ -20,7 +20,8 @@ defmodule PhoenixDDOS.IpRateLimitPerRequestPath do
   # from {PhoenixDDOS.IpRateLimitPerRequestPath, request_paths: ["/user", "/admin"], allowed: 20, period: {1, :minute}}
   # to [{"123", ["/user"], 60_000, 500}, {"123", ["/admin"], 60_000, 500}]
   # or
-  # from {PhoenixDDOS.IpRateLimitPerRequestPath, request_paths: ["/user", "/admin"], shared: true, allowed: 20, period: {1, :minute}}
+  # from {PhoenixDDOS.IpRateLimitPerRequestPath, request_paths: ["/user", "/admin"],
+  #       shared: true, allowed: 20, period: {1, :minute}}
   # to {"123", ["/user", "/admin"], 60_000, 500}
   def prepare_config(cfg) do
     if Keyword.get(cfg, :shared) == true do
