@@ -8,7 +8,7 @@ defmodule PhoenixDDOS.Application do
     config = %{}
     link = PhoenixDDOS.Supervisor.start_link(config, name: PhoenixDDOS.Supervisor)
 
-    PhoenixDDOS.Config.init()
+    PhoenixDDOS.Engine.init()
     link
   end
 end

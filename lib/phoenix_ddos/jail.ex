@@ -4,7 +4,7 @@ defmodule PhoenixDDOS.Jail do
   """
 
   def send(ip, duration_min \\ nil) do
-    duration_min = duration_min || Application.compile_env(:phoenix_ddos, :jail_time_minutes)
+    duration_min = duration_min || Application.get_env(:phoenix_ddos, :jail_time_minutes)
 
     {:ok, _} = Cachex.incr(:phoenix_ddos_jail, "suspicious_#{ip}", ttl: :timer.hours(6))
 

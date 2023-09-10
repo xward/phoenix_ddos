@@ -36,6 +36,9 @@ end
 
 # Configuration
 
+> [!WARNING]
+> :warning: All configurations must be provide at compilation, you can't use runtime.exs to configure.
+
 ```elixir
 config :phoenix_ddos,
   protections: [
