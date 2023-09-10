@@ -12,6 +12,10 @@ Application-layer DDOS protection for phoenix.
     <img alt="CI Status" src="https://github.com/xward/phoenix_ddos/actions/workflows/ci.yml/badge.svg">
   </a>
 
+  <a href="https://hex.pm/packages/phoenix_ddos">
+    <img alt="Hex Version" src="https://img.shields.io/hexpm/v/phoenix_ddos.svg">
+  </a>
+
   <a href="https://opensource.org/licenses/Apache-2.0">
     <img alt="Apache 2 License" src="https://img.shields.io/hexpm/l/phoenix_ddos">
   </a>
