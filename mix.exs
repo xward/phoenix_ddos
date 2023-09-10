@@ -1,7 +1,8 @@
 defmodule PhoenixDDOS.MixProject do
   use Mix.Project
 
-  @version "0.7.0"
+  @version "0.7.3"
+  @source_url "https://github.com/xward/phoenix_ddos"
 
   def project do
     [
@@ -15,7 +16,19 @@ defmodule PhoenixDDOS.MixProject do
       preferred_cli_env: [
         credo: :test,
         ci: :test
-      ]
+      ],
+      package: [
+        maintainers: ["xward"],
+        licenses: ["Apache-2.0"],
+        files: ~w(lib .formatter.exs mix.exs README* CHANGELOG* LICENSE*),
+        links: %{
+          Changelog: "#{@source_url}/blob/main/CHANGELOG.md",
+          GitHub: @source_url
+        }
+      ],
+      description: """
+      Application-layer DDOS protection for phoenix.
+      """
     ]
   end
 
