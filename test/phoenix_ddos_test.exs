@@ -110,6 +110,4 @@ defmodule PhoenixDDOSTest do
       run_ddos(conn, 0)
     end
   end
-
-
 end

@@ -1,5 +1,22 @@
 # PhoenixDDOS
 
+Application-layer DDOS protection for phoenix.
+
+
+<p align="center">
+  <a href="https://hexdocs.pm/phoenix_ddos">
+    <img alt="Hex Docs" src="http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat">
+  </a>
+
+  <a href="https://github.com/xward/phoenix_ddos/actions/workflows/ci.yml">
+    <img alt="CI Status" src="https://github.com/xward/phoenix_ddos/actions/workflows/ci.yml/badge.svg">
+  </a>
+
+  <a href="https://opensource.org/licenses/Apache-2.0">
+    <img alt="Apache 2 License" src="https://img.shields.io/hexpm/l/phoenix_ddos">
+  </a>
+</p>
+
 
 # Installation
 

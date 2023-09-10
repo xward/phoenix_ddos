@@ -14,7 +14,7 @@ defmodule PhoenixDDOS.MixProject do
       aliases: aliases(),
       preferred_cli_env: [
         credo: :test,
-        check: :test
+        ci: :test
       ]
     ]
   end
@@ -44,7 +44,7 @@ defmodule PhoenixDDOS.MixProject do
   defp aliases do
     [
       credo: "credo --strict",
-      check: [
+      ci: [
         "format --check-formatted",
         "deps.unlock --check-unused",
         "credo --strict",

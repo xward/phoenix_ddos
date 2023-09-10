@@ -3,7 +3,6 @@ defmodule PhoenixDDOS.DDOSUtils do
 
   import ExUnit.Assertions
 
-
   def put_protections(protections) do
     Application.put_env(:phoenix_ddos, :protections, protections)
     PhoenixDDOS.Engine.init()
