@@ -3,12 +3,12 @@ defmodule PhoenixDDOS.Jail do
   Ip got caught, go to jail ! Skipping request count
   """
 
-  def send(ip, duration_min \\ nil) do
-    duration_min = duration_min || Application.get_env(:phoenix_ddos, :jail_time_minutes)
+  alias PhoenixDDOS.Time
 
-    {:ok, _} = Cachex.incr(:phoenix_ddos_jail, "suspicious_#{ip}", ttl: :timer.hours(6))
+  def send(ip, {_module, cfg} = _prot) do
+    {:ok, _} = Cachex.put(:phoenix_ddos_jail, "suspicious_#{ip}", ttl: :timer.hours(6))
 
-    Cachex.put(:phoenix_ddos_jail, ip, true, ttl: :timer.minutes(duration_min))
+    Cachex.put(:phoenix_ddos_jail, ip, true, ttl: Time.period_to_msec(cfg.jail_time))
   end
 
   def in_jail?(ip) do

@@ -53,7 +53,7 @@ config :phoenix_ddos,
 | Option               | Default                | Description                                                               |
 | :------------------- | :--------------------- | :------------------------------------------------------------------------ |
 | enable               |      true   (@compil)  | set to false to disable                                                   |
-| jail_time_minutes    |      5      (@compil)  | time an ip is fully blocked if caught by a protection                     |
+| jail_time            |     15      (@compil)  | time an ip is fully blocked if caught by a protection. set nil to disable |
 | raise_on_reject      |     false              | raise when we reject a connexion intead of returning an http code error   |
 | http_code_on_reject  |       429              | http code returned when we reject a connexion                             |
 | protections          | mandatory              | @see protections configuration                                            |
@@ -80,8 +80,14 @@ You can also configure this time per protection, 0 is a valide configuration and
 
 ## `PhoenixDDOS.IpRateLimit`
 
+1. 500 per minute max, if triggered ip will be in jail for 15 minutes
 ```elixir
   [{PhoenixDDOS.IpRateLimit, allowed: 500, period: {1, :minute}}]
+```
+
+2. disable jail, ip will only be throttle to 500 per minute
+```elixir
+  [{PhoenixDDOS.IpRateLimit, allowed: 500, period: {1, :minute}, jail_time: nil}]
 ```
 
 ## `PhoenixDDOS.IpRateLimitPerRequestPath`

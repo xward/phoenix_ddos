@@ -4,61 +4,85 @@ defmodule PhoenixDDOSTest do
 
   doctest PhoenixDDOS
 
-  describe "call/2" do
-    test "IpRateLimit with restore" do
-      configure_protections([{PhoenixDDOS.IpRateLimit, allowed: 10, period: {2, :second}}])
+  @an_ip {1, 2, 3, 4}
 
-      peer = {86, 75, 30, 9}
-      conn = %Plug.Conn{remote_ip: peer}
+  describe "call/2" do
+    setup do
+      Cachex.clear(:phoenix_ddos_store)
+      Cachex.clear(:phoenix_ddos_jail)
+      :ok
+    end
+
+    test "IpRateLimit with jail" do
+      [
+        {PhoenixDDOS.IpRateLimit, allowed: 10, period: {2, :second}}
+      ]
+      |> configure_protections()
+
+      conn = %Plug.Conn{remote_ip: @an_ip}
       run_ddos(conn, 10)
 
       :timer.sleep(3000)
+      # still blocked, even if we waited more than period
+      run_ddos(conn, 0)
+    end
+
+    test "IpRateLimit thottle" do
+      [
+        {PhoenixDDOS.IpRateLimit, allowed: 10, period: {2, :second}, jail_time: nil}
+      ]
+      |> configure_protections()
+
+      conn = %Plug.Conn{remote_ip: @an_ip}
+      run_ddos(conn, 10)
+
+      :timer.sleep(3000)
+      # fresh quota
       run_ddos(conn, 10)
     end
 
     test "IpRateLimit bench" do
-      configure_protections([
+      [
         {PhoenixDDOS.IpRateLimit, allowed: 10_000, period: {2, :second}},
         {PhoenixDDOS.IpRateLimitPerRequestPath,
          request_paths: ["/admin"], allowed: 3, period: {1, :minute}}
-      ])
+      ]
+      |> configure_protections()
 
-      peer = {86, 75, 30, 9}
-      conn = %Plug.Conn{remote_ip: peer}
+      conn = %Plug.Conn{remote_ip: @an_ip}
 
-      start = DateTime.utc_now()
+      start = PhoenixDDOS.Time.now()
       run_ddos(conn, 10_000)
-      diff = DateTime.diff(DateTime.utc_now(), start, :millisecond)
 
-      # ~ 30ms per 10k
-      assert diff < 100
+      # ~ 30 ms per 10k
+      assert PhoenixDDOS.Time.diff_ms(start) < 100
     end
 
     test "IpRateLimitPerRequestPath" do
-      configure_protections([
+      [
         {PhoenixDDOS.IpRateLimitPerRequestPath,
-         request_paths: ["/admin"], allowed: 3, period: {1, :minute}}
-      ])
+         request_paths: ["/admin"], allowed: 3, period: {1, :minute}, jail_time: nil}
+      ]
+      |> configure_protections()
 
-      peer = {86, 75, 30, 9}
-      conn = %Plug.Conn{remote_ip: peer, request_path: "/admin"}
+      conn = %Plug.Conn{remote_ip: @an_ip, request_path: "/admin"}
       run_ddos(conn, 3)
 
-      conn = %Plug.Conn{remote_ip: peer, request_path: "/user"}
-      run_ddos(conn, :never)
+      conn = %Plug.Conn{remote_ip: @an_ip, request_path: "/user"}
+      run_ddos(conn, :never_fail)
     end
 
     test "IpRateLimitPerRequestPath shared quota along all paths" do
-      configure_protections([
+      [
         {PhoenixDDOS.IpRateLimitPerRequestPath,
          request_paths: ["/admin", "/user"], allowed: 3, shared: true, period: {1, :minute}}
-      ])
+      ]
+      |> configure_protections()
 
-      peer = {86, 75, 30, 9}
-      conn = %Plug.Conn{remote_ip: peer, request_path: "/admin"}
+      conn = %Plug.Conn{remote_ip: @an_ip, request_path: "/admin"}
       run_ddos(conn, 3)
 
-      conn = %Plug.Conn{remote_ip: peer, request_path: "/user"}
+      conn = %Plug.Conn{remote_ip: @an_ip, request_path: "/user"}
       run_ddos(conn, 0)
     end
   end
@@ -69,10 +93,10 @@ defmodule PhoenixDDOSTest do
 
   defp configure_protections(protections) do
     Application.put_env(:phoenix_ddos, :protections, protections)
-    PhoenixDDOS.Config.init()
+    PhoenixDDOS.Engine.init()
   end
 
-  defp run_ddos(conn, :never) do
+  defp run_ddos(conn, :never_fail) do
     1..100
     |> Enum.each(fn _ ->
       conn |> call() |> assert_allowed()

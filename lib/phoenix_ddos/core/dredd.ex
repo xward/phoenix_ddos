@@ -4,8 +4,6 @@ defmodule PhoenixDDOS.Dredd do
   """
   import Plug.Conn
 
-  alias PhoenixDDOS.Jail
-
   def reject(%Plug.Conn{} = conn) do
     if config(:raise_on_reject, false) do
       raise "PhoenixDDOS: too much request"

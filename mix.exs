@@ -27,6 +27,7 @@ defmodule PhoenixDDOS.MixProject do
     [
       {:plug, "~> 1.14"},
       {:cachex, "~> 3.6"},
+      {:dialyxir, "~> 1.0", only: [:test, :dev], runtime: false},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:credo, "~> 1.6", only: [:test, :dev], runtime: false}
     ]
@@ -34,18 +35,20 @@ defmodule PhoenixDDOS.MixProject do
 
   defp aliases do
     [
+      credo: "credo --strict",
+      check: [
+        "format --check-formatted",
+        "deps.unlock --check-unused",
+        "credo --strict",
+        "test --raise",
+        "dialyzer"
+      ],
       release: [
         "cmd git tag v#{@version}",
         "cmd git push",
         "cmd git push --tags",
         "hex.publish package --yes",
         "hex.build"
-      ],
-      "test.ci": [
-        "format --check-formatted",
-        "deps.unlock --check-unused",
-        "credo --strict",
-        "test --raise"
       ]
     ]
   end

@@ -1,9 +1,9 @@
 defmodule PhoenixDDOS.Engine do
   @moduledoc """
-  Generate and compile a module EngineImpl on the fly.
-  Reason: small final code size/complexity and extreme performance (x30 faster than an ets cache)
-  This is unortodox? yes. Don't try this at home.
+  check and configure
   """
+
+  require Logger
 
   # --------------------------------------------------------------
   # main control
@@ -11,53 +11,79 @@ defmodule PhoenixDDOS.Engine do
 
   # returns conn, or rejected conn
   def control(%Plug.Conn{} = conn) do
-    # PhoenixDDOS.EngineImpl.control(conn)
-  end
+    ip = conn.remote_ip |> :inet.ntoa()
 
-  # --------------------------------------------------------------
-  # Code generation
-  # --------------------------------------------------------------
-
-  def init, do: generate()
-
-  def generate do
-      prot =[
-        PhoenixDDOS.IpRateLimit,
-        PhoenixDDOS.IpRateLimitPerRequestPath
-      ]
-      |> Keyword.new(fn module ->
-        {module, # convert to nicer atom plz
-         module
-         |> fetch_protection_configurations()
-         |> Enum.map(&prepare_config/1)
-         |> List.flatten()}
-      end)
-
-      Application.put_env(:phoenix_ddos, :prot, prot)
-
-  end
-
-  defp prepare_config({PhoenixDDOS.IpRateLimit, cfg}) do
-    %{id: rand_id()} |> put_rate_limit(cfg)
-  end
-
-  defp prepare_config({PhoenixDDOS.IpRateLimitPerRequestPath, cfg}) do
-    if Keyword.get(cfg, :shared) == true do
-      %{id: rand_id(), paths: Keyword.get(cfg, :request_paths)} |> put_rate_limit(cfg)
+    if PhoenixDDOS.Jail.in_jail?(ip) do
+      PhoenixDDOS.Dredd.reject(conn)
     else
-      Keyword.get(cfg, :request_paths)
-      |> Enum.map(fn path ->
-        %{id: rand_id(), paths: [path]} |> put_rate_limit(cfg)
-      end)
+      # suggestion perf: upgrade using cachex execution block
+      decisions =
+        Application.get_env(:phoenix_ddos, :prots)
+        |> Enum.reduce(%{}, fn {module, cfg} = prot, acc ->
+          Map.put(acc, module.check(conn, cfg), prot)
+        end)
+
+      # map of {a_decision: prot}
+      # we can only have one of each
+      # a_decision is in [:pass, :block, :jail, :pass]
+
+      cond do
+        decisions[:jail] ->
+          Logger.warning(
+            "PhoenixDDOS: ip[#{ip}] goes to JAIL. From prot #{inspect(decisions[:jail])} with love"
+          )
+
+          PhoenixDDOS.Jail.send(ip, decisions[:jail])
+          PhoenixDDOS.Dredd.reject(conn)
+
+        decisions[:block] ->
+          Logger.warning(
+            "PhoenixDDOS: ip[#{ip}] request reject. From prot #{inspect(decisions[:block])} with love"
+          )
+
+          PhoenixDDOS.Dredd.reject(conn)
+
+        true ->
+          conn
+      end
     end
   end
 
-  defp put_rate_limit(map, cfg) do
-    map
-    |> Map.merge(%{
-      period_ms: period_to_msec(Keyword.get(cfg, :period)),
-      allowed: Keyword.get(cfg, :allowed)
-    })
+  # --------------------------------------------------------------
+  # pre-configuration
+  # --------------------------------------------------------------
+
+  def init, do: configure()
+
+  def configure do
+    Application.put_env(
+      :phoenix_ddos,
+      :prots,
+      [
+        PhoenixDDOS.IpRateLimit,
+        PhoenixDDOS.IpRateLimitPerRequestPath
+      ]
+      |> Enum.map(fn module ->
+        module
+        |> fetch_protection_configurations()
+        |> Enum.map(&prepare_cfgs/1)
+        |> List.flatten()
+      end)
+      |> List.flatten()
+    )
+  end
+
+  def prepare_cfgs({module, cfg_src}) do
+    cfg_src
+    |> Map.new()
+    |> put_id()
+    |> put_sentence()
+    |> module.prepare_config()
+    # a prepare_config may split itself in a list of cfg
+    |> case do
+      cfgs when is_list(cfgs) -> cfgs |> Enum.map(fn cfg -> {module, cfg} end)
+      cfg -> {module, cfg}
+    end
   end
 
   defp fetch_protection_configurations(module) do
@@ -65,26 +91,16 @@ defmodule PhoenixDDOS.Engine do
     |> Enum.filter(fn {mod, _} -> mod == module end)
   end
 
-  defp rand_id do
-    :crypto.strong_rand_bytes(3) |> Base.encode64()
-  end
+  defp rand_id, do: :crypto.strong_rand_bytes(3) |> Base.encode64()
 
-  defp period_to_msec({n, :second}), do: n * 1_000
-  defp period_to_msec({n, :minute}), do: n * 60_000
-  defp period_to_msec({n, :hour}), do: n * 3_600_000
-  defp period_to_msec({n, :day}), do: n * 24 * 3_600_000
-  defp period_to_msec(period), do: raise("Invalid configuration period #{period}")
+  defp put_id(cfg), do: cfg |> Map.put(:id, rand_id())
 
-  # defp preview_compile(context) do
-  #   "lib/phoenix_ddos/engine/engine_impl.eex"
-  #   |> EEx.eval_file(context)
-  # end
+  defp put_sentence(%{jail_time: nil} = cfg), do: cfg |> Map.put(:sentence, :block)
+  defp put_sentence(%{jail_time: _} = cfg), do: cfg |> Map.put(:sentence, :jail)
 
-  # defp compile(context) do
-  #   "lib/phoenix_ddos/engine/engine_impl.eex"
-  #   |> EEx.eval_file(context)
-  #   |> Code.compile_string()
-  # end
+  defp put_sentence(cfg),
+    do:
+      cfg
+      |> Map.put(:jail_time, Application.get_env(:phoenix_ddos, :jail_time, {15, :minute}))
+      |> put_sentence()
 end
-
-# upgrade using execution block

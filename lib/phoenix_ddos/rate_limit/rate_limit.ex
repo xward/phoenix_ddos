@@ -5,17 +5,19 @@ defmodule PhoenixDDOS.RateLimit do
 
   @store :phoenix_ddos_store
 
+  alias PhoenixDDOS.Time
+
   @debug false
 
   # on_catch in :jail, :block
-  def incr_check(key, period_ms, allowed, on_catch) do
+  def incr_check(key, period, allowed, on_catch) do
     {:ok, n} = Cachex.incr(@store, key)
 
     if @debug, do: IO.puts("#{key} #{n} #{allowed}")
 
     case n do
       1 ->
-        {:ok, true} = Cachex.expire(@store, key, period_ms)
+        {:ok, true} = Cachex.expire(@store, key, Time.period_to_msec(period))
         :pass
 
       n when n > allowed ->

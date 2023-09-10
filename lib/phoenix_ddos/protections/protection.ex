@@ -3,8 +3,8 @@ defmodule PhoenixDDOS.Protection do
 
   defmacro __using__(_opts) do
     quote do
-      alias PhoenixDDOS.Cache
-      alias PhoenixDDOS.Config
+      alias PhoenixDDOS.RateLimit
+      alias PhoenixDDOS.Time
     end
   end
 end
