@@ -1,10 +1,17 @@
 defmodule PhoenixDDOSTest do
+  @moduledoc """
+  All ddos test can't be run async
+  """
+
   use ExUnit.Case, async: true
   use Plug.Test
 
   doctest PhoenixDDOS
 
+  import PhoenixDDOS.DDOSUtils
+
   @an_ip {1, 2, 3, 4}
+  @another_ip {1, 2, 3, 5}
 
   describe "call/2" do
     setup do
@@ -17,24 +24,41 @@ defmodule PhoenixDDOSTest do
       [
         {PhoenixDDOS.IpRateLimit, allowed: 10, period: {2, :second}}
       ]
-      |> configure_protections()
+      |> put_protections()
 
       conn = %Plug.Conn{remote_ip: @an_ip}
+      assert_not_in_jail(@an_ip)
+
       run_ddos(conn, 10)
+      assert_in_jail(@an_ip)
 
       :timer.sleep(3000)
       # still blocked, even if we waited more than period
       run_ddos(conn, 0)
     end
 
+    test "IpRateLimit multiple ip" do
+      [
+        {PhoenixDDOS.IpRateLimit, allowed: 10, period: {2, :second}}
+      ]
+      |> put_protections()
+
+      conn = %Plug.Conn{remote_ip: @an_ip}
+      run_ddos(conn, 10)
+
+      conn = %Plug.Conn{remote_ip: @another_ip}
+      run_ddos(conn, 10)
+    end
+
     test "IpRateLimit thottle" do
       [
         {PhoenixDDOS.IpRateLimit, allowed: 10, period: {2, :second}, jail_time: nil}
       ]
-      |> configure_protections()
+      |> put_protections()
 
       conn = %Plug.Conn{remote_ip: @an_ip}
       run_ddos(conn, 10)
+      assert_not_in_jail(@an_ip)
 
       :timer.sleep(3000)
       # fresh quota
@@ -47,7 +71,7 @@ defmodule PhoenixDDOSTest do
         {PhoenixDDOS.IpRateLimitPerRequestPath,
          request_paths: ["/admin"], allowed: 3, period: {1, :minute}}
       ]
-      |> configure_protections()
+      |> put_protections()
 
       conn = %Plug.Conn{remote_ip: @an_ip}
 
@@ -63,7 +87,7 @@ defmodule PhoenixDDOSTest do
         {PhoenixDDOS.IpRateLimitPerRequestPath,
          request_paths: ["/admin"], allowed: 3, period: {1, :minute}, jail_time: nil}
       ]
-      |> configure_protections()
+      |> put_protections()
 
       conn = %Plug.Conn{remote_ip: @an_ip, request_path: "/admin"}
       run_ddos(conn, 3)
@@ -77,7 +101,7 @@ defmodule PhoenixDDOSTest do
         {PhoenixDDOS.IpRateLimitPerRequestPath,
          request_paths: ["/admin", "/user"], allowed: 3, shared: true, period: {1, :minute}}
       ]
-      |> configure_protections()
+      |> put_protections()
 
       conn = %Plug.Conn{remote_ip: @an_ip, request_path: "/admin"}
       run_ddos(conn, 3)
@@ -87,44 +111,5 @@ defmodule PhoenixDDOSTest do
     end
   end
 
-  # ------------------------------------------------------------------
-  # utils
-  # ------------------------------------------------------------------
 
-  defp configure_protections(protections) do
-    Application.put_env(:phoenix_ddos, :protections, protections)
-    PhoenixDDOS.Engine.init()
-  end
-
-  defp run_ddos(conn, :never_fail) do
-    1..100
-    |> Enum.each(fn _ ->
-      conn |> call() |> assert_allowed()
-    end)
-  end
-
-  defp run_ddos(conn, should_fail_after) do
-    1..(should_fail_after + 3)
-    |> Enum.each(fn
-      i when i > should_fail_after ->
-        conn |> call() |> assert_rejected()
-
-      _ ->
-        conn |> call() |> assert_allowed()
-    end)
-  end
-
-  defp call(conn, opts \\ []) do
-    PhoenixDDOS.call(conn, PhoenixDDOS.init(opts))
-  end
-
-  defp assert_allowed(conn) do
-    assert conn.halted == false
-    assert conn.status == nil
-  end
-
-  defp assert_rejected(conn) do
-    assert conn.halted
-    assert conn.status == Application.get_env(:phoenix_ddos, :http_code_on_reject, 429)
-  end
 end
