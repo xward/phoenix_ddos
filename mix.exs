@@ -10,7 +10,11 @@ defmodule PhoenixDDOS.MixProject do
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      aliases: aliases()
+      aliases: aliases(),
+      preferred_cli_env: [
+        credo: :test,
+        check: :test
+      ]
     ]
   end
 
