@@ -2,7 +2,6 @@
 
 Application-layer DDOS protection for phoenix.
 
-
 <p align="center">
   <a href="https://hexdocs.pm/phoenix_ddos">
     <img alt="Hex Docs" src="http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat">
@@ -21,7 +20,6 @@ Application-layer DDOS protection for phoenix.
   </a>
 </p>
 
-
 # Installation
 
 Add `:phoenix_ddos` to your list of dependencies in `mix.exs`:
@@ -38,7 +36,7 @@ end
 
 # Usage
 
-Add the `PhoenixDDOS` plug to your app's plug pipeline, along with the excelent `RemoteIp` (optional but highly recommended !).
+Add the `PhoenixDDOS` plug to your app's plug pipeline, along with the excellent `RemoteIp` (optional but highly recommended !).
 
 
 ```elixir
@@ -57,9 +55,6 @@ end
 
 # Configuration
 
-> [!WARNING]
-> :warning: All configurations must be provide at compilation, you can't use runtime.exs to configure.
-
 ```elixir
 config :phoenix_ddos,
   protections: [
@@ -71,13 +66,13 @@ config :phoenix_ddos,
   ]
 ```
 
-| Option               | Default                | Description                                                               |
-| :------------------- | :--------------------- | :------------------------------------------------------------------------ |
-| enable               |      true   (@compil)  | set to false to disable                                                   |
-| jail_time            |     15      (@compil)  | time an ip is fully blocked if caught by a protection. set nil to disable |
-| raise_on_reject      |     false              | raise when we reject a connexion intead of returning an http code error   |
-| http_code_on_reject  |       429              | http code returned when we reject a connexion                             |
-| protections          | mandatory              | @see protections configuration                                            |
+| Option                 | Default                | Description                                                               |
+| :--------------------- | :--------------------- | :------------------------------------------------------------------------ |
+| `enabled`              |      true   (@compil)  | set to false to disable                                                   |
+| `jail_time`            |     15      (@compil)  | time an ip is fully blocked if caught by a protection. set nil to disable |
+| `raise_on_reject`      |     false              | raise when we reject a connexion instead of returning an http code error  |
+| `http_code_on_reject`  |       429              | http code returned when we reject a connexion                             |
+| `protections`          | mandatory              | @see protections configuration                                            |
 
 
 # Motivation
@@ -95,11 +90,13 @@ You want advance ddos feature you can't have outside an applicative environment
 ## Ip jail
 
 All protections that trigger a deny of an ip will push said ip into jail.
+
 Jail default duration is 5min, configurable.
-You can also configure this time per protection, 0 is a valide configuration and disable jail mecanic from this protection.
+
+You can also configure this time per protection, set `jail_time` to nil to disable.
 
 
-## `PhoenixDDOS.IpRateLimit`
+## Examples `PhoenixDDOS.IpRateLimit`
 
 1. 500 per minute max, if triggered ip will be in jail for 15 minutes
 ```elixir
@@ -111,7 +108,7 @@ You can also configure this time per protection, 0 is a valide configuration and
   [{PhoenixDDOS.IpRateLimit, allowed: 500, period: {1, :minute}, jail_time: nil}]
 ```
 
-## `PhoenixDDOS.IpRateLimitPerRequestPath`
+## Examples `PhoenixDDOS.IpRateLimitPerRequestPath`
 
 1. single route
 ```elixir
@@ -143,8 +140,8 @@ You can also configure this time per protection, 0 is a valide configuration and
 
 ## period syntax example
 
-period: {30, :second}
-period: {1, :minute}
-period: {2, :minute}
-period: {1, :hour}
-period: {1, :day}
+* period: {30, :second}
+* period: {1, :minute}
+* period: {2, :minute}
+* period: {1, :hour}
+* period: {1, :day}

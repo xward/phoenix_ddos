@@ -28,7 +28,7 @@ defmodule PhoenixDDOS.MixProject do
         }
       ],
       description: """
-      Application-layer DDOS protection for phoenix.
+      [beta] Application-layer DDOS protection for phoenix.
       """,
       # Dialyzer
       dialyzer: [

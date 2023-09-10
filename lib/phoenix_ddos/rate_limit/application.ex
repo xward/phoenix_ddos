@@ -12,9 +12,8 @@ defmodule PhoenixDDOS.Application do
 
     PhoenixDDOS.Engine.init()
 
-    Logger.info(
-      "PhoenixDDOS loaded and ready with #{length(Application.get_env(:phoenix_ddos, :prots))} protections."
-    )
+    protections_count = length(Application.get_env(:phoenix_ddos, :prots))
+    Logger.info("PhoenixDDOS ready with #{protections_count} protections.")
 
     link
   end
