@@ -13,7 +13,7 @@ defmodule PhoenixDDoS.IpRateLimitPerRequestPath do
 
       # ttodo: unify conn.request_path
 
-      key = "ip_#{cfg.id}_#{ip}_r#{conn.request_path}"
+      key = "ippath_#{cfg.id}_#{ip}"
       RateLimit.incr_check(key, cfg.period, cfg.allowed, cfg.sentence)
     else
       :pass

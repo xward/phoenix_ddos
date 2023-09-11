@@ -104,9 +104,7 @@ defmodule PhoenixDDoS.Engine do
   defp put_sentence(%{jail_time: nil} = cfg), do: cfg |> Map.put(:sentence, :block)
   defp put_sentence(%{jail_time: _} = cfg), do: cfg |> Map.put(:sentence, :jail)
 
-  defp put_sentence(cfg),
-    do:
-      cfg
-      |> Map.put(:jail_time, Application.get_env(:phoenix_ddos, :jail_time, {15, :minute}))
-      |> put_sentence()
+  defp put_sentence(cfg), do: cfg |> Map.put(:jail_time, default_jail_time()) |> put_sentence()
+
+  defp default_jail_time, do: Application.get_env(:phoenix_ddos, :jail_time, {15, :minutes})
 end

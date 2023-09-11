@@ -121,7 +121,7 @@ defmodule PhoenixDDoSTest do
     test "IpRateLimitPerRequestPath shared quota along all paths" do
       [
         {PhoenixDDoS.IpRateLimitPerRequestPath,
-         request_paths: ["/admin", "/user"], allowed: 3, shared: true, period: {1, :minute}}
+         request_paths: ["/admin", "/user"], allowed: 3, shared: true, jail_time: nil, period: {1, :minute}}
       ]
       |> put_protections()
 
