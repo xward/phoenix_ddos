@@ -2,6 +2,8 @@
 
 High performance application-layer DDoS protection for Elixir Phoenix.
 
+> :warning: The project was created very recently, gimme us time to bring it to a well documented v1 !
+
 <p align="center">
   <a href="https://hexdocs.pm/phoenix_ddos">
     <img alt="Hex Docs" src="http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat">
