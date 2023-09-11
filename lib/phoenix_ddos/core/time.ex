@@ -1,7 +1,5 @@
 defmodule PhoenixDDoS.Time do
-  @moduledoc """
-  Time helper
-  """
+  @moduledoc false
 
   def now, do: DateTime.utc_now()
   def diff_ms(%DateTime{} = start), do: DateTime.diff(now(), start, :millisecond)

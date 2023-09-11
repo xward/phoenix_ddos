@@ -1,7 +1,8 @@
 defmodule PhoenixDDoS.Dredd do
-  @moduledoc """
-  Judge, Jury, and Executioner
-  """
+  @moduledoc false
+
+  #  Judge, Jury, and Executioner
+
   import Plug.Conn
 
   def reject(%Plug.Conn{} = conn) do

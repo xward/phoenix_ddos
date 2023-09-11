@@ -1,7 +1,7 @@
 defmodule PhoenixDDoS.Jail do
-  @moduledoc """
-  Ip got caught, go to jail ! Skipping request count
-  """
+  @moduledoc false
+
+  # Ip got caught, go to jail ! Skipping request count
 
   alias PhoenixDDoS.Time
 

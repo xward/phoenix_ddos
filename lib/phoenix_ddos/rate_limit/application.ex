@@ -1,7 +1,7 @@
 defmodule PhoenixDDoS.Application do
-  @moduledoc """
-  PhoenixDDoS application, responsible for starting Cachex cache
-  """
+  @moduledoc false
+
+  # PhoenixDDoS application, responsible for starting Cachex cache
   use Application
 
   require Logger

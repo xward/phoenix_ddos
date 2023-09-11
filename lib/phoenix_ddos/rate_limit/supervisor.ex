@@ -1,9 +1,9 @@
 defmodule PhoenixDDoS.Supervisor do
-  @moduledoc """
-  Top-level Supervisor for the PhoenixDDoS application.
+  @moduledoc false
 
-  Start ETS cache (Cachex)
-  """
+  # Top-level Supervisor for the PhoenixDDoS application.
+
+  # Start ETS cache (Cachex)
 
   use Supervisor
 

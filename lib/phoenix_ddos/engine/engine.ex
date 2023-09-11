@@ -1,7 +1,5 @@
 defmodule PhoenixDDoS.Engine do
-  @moduledoc """
-  check and configure
-  """
+  @moduledoc false
 
   require Logger
 

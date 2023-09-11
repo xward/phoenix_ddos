@@ -1,7 +1,7 @@
 defmodule PhoenixDDoS.RateLimit do
-  @moduledoc """
-  Helper count & check over ETS Cachex
-  """
+  @moduledoc false
+
+  # Helper count & check over ETS Cachex
 
   @store :phoenix_ddos_store
 
