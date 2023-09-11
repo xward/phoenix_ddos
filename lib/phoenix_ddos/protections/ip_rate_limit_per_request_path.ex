@@ -6,6 +6,7 @@ defmodule PhoenixDDoS.IpRateLimitPerRequestPath do
   use PhoenixDDoS.Protection
 
   # returns in [:pass, :block, :jail]
+  @doc false
   def check(conn, cfg) do
     if conn.request_path in cfg.request_paths do
       ip = conn.remote_ip |> :inet.ntoa()
@@ -19,6 +20,7 @@ defmodule PhoenixDDoS.IpRateLimitPerRequestPath do
     end
   end
 
+  @doc false
   def prepare_config(%{shared: true} = cfg), do: cfg
 
   def prepare_config(cfg) do
