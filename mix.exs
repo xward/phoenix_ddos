@@ -1,7 +1,7 @@
 defmodule PhoenixDDoS.MixProject do
   use Mix.Project
 
-  @version "0.7.6"
+  @version "0.7.9"
   @source_url "https://github.com/xward/phoenix_ddos"
 
   def project do
@@ -35,6 +35,16 @@ defmodule PhoenixDDoS.MixProject do
         plt_add_apps: [:ex_unit],
         plt_core_path: "_build/#{Mix.env()}",
         flags: [:error_handling, :missing_return, :underspecs]
+      ],
+      # Docs
+      name: "PhoenixDDoS",
+      source_url: @source_url,
+      homepage_url: @source_url,
+      docs: [
+        # The main page in the docs
+        main: "PhoenixDDoS",
+        # logo: "path/to/logo.png",
+        extras: ["README.md"]
       ]
     ]
   end
@@ -75,8 +85,10 @@ defmodule PhoenixDDoS.MixProject do
         "cmd git tag v#{@version}",
         "cmd git push",
         "cmd git push --tags",
-        "hex.publish package --yes",
-        "hex.build"
+        "hex.publish --yes",
+        "hex.build",
+        "cmd rm phoenix_ddos-*.tar",
+        "cmd rm -rf doc"
       ]
     ]
   end

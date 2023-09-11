@@ -5,7 +5,7 @@ High performance application-layer DDoS protection for Elixir Phoenix.
 > :warning: The project was created very recently, gimme us time to bring it to a well documented v1 !
 
 <p align="center">
-  <a href="https://hexdocs.pm/phoenix_ddos">
+  <a href="https://hexdocs.pm/phoenix_ddos/PhoenixDDoS.html">
     <img alt="Hex Docs" src="http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat">
   </a>
 
@@ -110,7 +110,7 @@ you don't always have access to a ddos protection in between internet and your p
 You want advance ddos feature you can't have outside an applicative environment
 
 inspiration: [rack-attack][rack-attack_github]
-`PhoenixDDoS.IpRateLimitPerRequestPath`
+
 # Protections
 
 ## Examples with `PhoenixDDoS.IpRateLimit`
