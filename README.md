@@ -27,10 +27,12 @@ High performance application-layer DDoS protection for Elixir Phoenix.
 
 # Features
 
-ip/range whitelist
-ip/range blacklist
+ip whitelist
+
+ip blacklist
 
 `PhoenixDDoS.IpRateLimit`
+
 `PhoenixDDoS.IpRateLimitPerRequestPath`
 
 

@@ -14,11 +14,11 @@ defmodule PhoenixDDoS.Engine do
     ip = conn.remote_ip |> :inet.ntoa()
 
     cond do
-      ip in Application.get_env(:phoenix_ddos, :safelist_ips, []) ->
-        conn
-
       ip in Application.get_env(:phoenix_ddos, :blocklist_ips, []) ->
         PhoenixDDoS.Dredd.reject(conn)
+
+      ip in Application.get_env(:phoenix_ddos, :safelist_ips, []) ->
+        conn
 
       PhoenixDDoS.Jail.in_jail?(ip) ->
         PhoenixDDoS.Dredd.reject(conn)
