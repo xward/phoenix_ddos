@@ -24,7 +24,6 @@ defmodule PhoenixDDoSTest do
     end
 
     test "safelist_ips" do
-      conn = %Plug.Conn{remote_ip: @an_ip}
       Application.put_env(:phoenix_ddos, :safelist_ips, [@an_ip |> :inet.ntoa()])
 
       [
@@ -32,14 +31,13 @@ defmodule PhoenixDDoSTest do
       ]
       |> put_protections()
 
-      run_ddos(conn, :never_fail)
+      run_ddos(conn(), :never_fail)
     end
 
     test "blocklist_ips" do
-      conn = %Plug.Conn{remote_ip: @an_ip}
       Application.put_env(:phoenix_ddos, :blocklist_ips, [@an_ip |> :inet.ntoa()])
 
-      run_ddos(conn, :always_fail)
+      run_ddos(conn(), :always_fail)
     end
 
     test "IpRateLimit with jail" do
@@ -48,15 +46,13 @@ defmodule PhoenixDDoSTest do
       ]
       |> put_protections()
 
-      conn = %Plug.Conn{remote_ip: @an_ip}
       assert_not_in_jail(@an_ip)
-
-      run_ddos(conn, assert_fail_after_request: 10)
+      run_ddos(conn(), assert_fail_after_request: 10)
       assert_in_jail(@an_ip)
 
       :timer.sleep(3000)
       # still blocked, even if we waited more than period
-      run_ddos(conn, :always_fail)
+      run_ddos(conn(), :always_fail)
     end
 
     test "IpRateLimit multiple ip" do
@@ -65,11 +61,9 @@ defmodule PhoenixDDoSTest do
       ]
       |> put_protections()
 
-      conn = %Plug.Conn{remote_ip: @an_ip}
-      run_ddos(conn, assert_fail_after_request: 10)
+      run_ddos(conn(), assert_fail_after_request: 10)
 
-      conn = %Plug.Conn{remote_ip: @another_ip}
-      run_ddos(conn, assert_fail_after_request: 10)
+      run_ddos(conn(%{remote_ip: @another_ip}), assert_fail_after_request: 10)
     end
 
     test "IpRateLimit thottle" do
@@ -78,13 +72,12 @@ defmodule PhoenixDDoSTest do
       ]
       |> put_protections()
 
-      conn = %Plug.Conn{remote_ip: @an_ip}
-      run_ddos(conn, assert_fail_after_request: 10)
+      run_ddos(conn(), assert_fail_after_request: 10)
       assert_not_in_jail(@an_ip)
 
       :timer.sleep(3000)
       # fresh quota
-      run_ddos(conn, assert_fail_after_request: 10)
+      run_ddos(conn(), assert_fail_after_request: 10)
     end
 
     test "IpRateLimit bench" do
@@ -95,10 +88,8 @@ defmodule PhoenixDDoSTest do
       ]
       |> put_protections()
 
-      conn = %Plug.Conn{remote_ip: @an_ip}
-
       start = PhoenixDDoS.Time.now()
-      run_ddos(conn, assert_fail_after_request: 10_000)
+      run_ddos(conn(), assert_fail_after_request: 10_000)
 
       # ~ 30 ms per 10k
       assert PhoenixDDoS.Time.diff_ms(start) < 100
@@ -114,14 +105,11 @@ defmodule PhoenixDDoSTest do
       ]
       |> put_protections()
 
-      conn = %Plug.Conn{remote_ip: @an_ip, request_path: "/admin/23/dashboard"}
-      run_ddos(conn, assert_fail_after_request: 3)
+      run_ddos(conn(%{request_path: "/admin/23/dashboard"}), assert_fail_after_request: 3)
 
-      conn = %Plug.Conn{remote_ip: @an_ip, request_path: "/admin"}
-      run_ddos(conn, assert_fail_after_request: 3)
+      run_ddos(conn(%{request_path: "/admin"}), assert_fail_after_request: 3)
 
-      conn = %Plug.Conn{remote_ip: @an_ip, request_path: "/user"}
-      run_ddos(conn, :never_fail)
+      run_ddos(conn(%{request_path: "/user"}), :never_fail)
     end
 
     test "IpRateLimitPerRequestPath shared quota along all paths" do
@@ -135,11 +123,13 @@ defmodule PhoenixDDoSTest do
       ]
       |> put_protections()
 
-      conn = %Plug.Conn{remote_ip: @an_ip, request_path: "/admin"}
-      run_ddos(conn, assert_fail_after_request: 3)
+      run_ddos(conn(%{request_path: "/admin"}), assert_fail_after_request: 3)
 
-      conn = %Plug.Conn{remote_ip: @an_ip, request_path: "/user"}
-      run_ddos(conn, :always_fail)
+      run_ddos(conn(%{request_path: "/user"}), :always_fail)
     end
+  end
+
+  defp conn(attr \\ %{}) do
+    conn(:get, "/") |> Map.put(:remote_ip, @an_ip) |> Map.merge(attr)
   end
 end

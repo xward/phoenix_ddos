@@ -62,8 +62,7 @@ end
 defmodule MyApp.Endpoint do
   use Phoenix.Endpoint, otp_app: :my_app
 
-  # ...
-
+  # put as high in the order as possible
   plug RemoteIp
   plug PhoenixDDoS
 
