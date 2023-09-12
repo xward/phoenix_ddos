@@ -27,18 +27,24 @@ High performance application-layer DDoS protection for Elixir Phoenix.
 
 # Features
 
-ip whitelist
+ip safelist_ips
 
-ip blacklist
+ip blocklist_ips
 
 `PhoenixDDoS.IpRateLimit`
 
 `PhoenixDDoS.IpRateLimitPerRequestPath`
 
 
-# Installation
+# Usage
 
-Add `:phoenix_ddos` to your list of dependencies in `mix.exs`:
+<!-- MDOC -->
+
+`phoenix_ddos` is a high performance application-layer DDoS protection for Elixir Phoenix.
+
+## Installation
+
+1. Add `:phoenix_ddos` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -50,9 +56,7 @@ def deps do
 end
 ```
 
-# Usage
-
-Add the `PhoenixDDoS` plug to your app's Endpoint, after the excellent [RemoteIp][remote_ip_github] plug (optional but highly recommended !).
+2. Add the `PhoenixDDoS` plug to your app's Endpoint, after the excellent [RemoteIp][remote_ip_github] plug (optional but highly recommended !).
 
 ```elixir
 defmodule MyApp.Endpoint do
@@ -68,7 +72,7 @@ defmodule MyApp.Endpoint do
 end
 ```
 
-# Configuration
+## Configuration
 
 ```elixir
 config :phoenix_ddos,
@@ -93,6 +97,15 @@ config :phoenix_ddos,
 | list | `protections`          |         | @see Protections                                                          |
 | list | `safelist_ips`         |         | bypass all protections ips                                                |
 | list | `blocklist_ips`        |         | always blocked ips                                                        |
+
+
+## Play with it
+
+after installation you can ddos yourself:
+
+```bash
+  mix phoenix_ddos.attack_myself
+```
 
 ## Ip jail
 
@@ -133,13 +146,19 @@ inspiration: [rack-attack][rack-attack_github]
      request_paths: ["/graphql"], allowed: 20, period: {1, :minute}}]
 ```
 
-2. multiple route consumming same quota
+2. you can also give a phoenix-like path
+```elixir
+    [{PhoenixDDoS.IpRateLimitPerRequestPath,
+     request_paths: ["/admin/:id/dashboard"], allowed: 20, period: {1, :minute}}]
+```
+
+3. multiple route consumming same quota
 ```elixir
     [{PhoenixDDoS.IpRateLimitPerRequestPath,
      request_paths: ["/graphql", "/graphiql"], allowed: 20, shared: true, period: {1, :minute}}]
 ```
 
-3. multiple route consumming independant quota
+4. multiple route consumming independant quota
 ```elixir
     [{PhoenixDDoS.IpRateLimitPerRequestPath,
      request_paths: ["/graphql", "/graphiql"], allowed: 20, period: {1, :minute}}]
@@ -157,3 +176,10 @@ is equivalant to:
 
 [remote_ip_github]: https://github.com/ajvondrak/remote_ip
 [rack-attack_github]: https://github.com/ajvondrak/remote_ip
+
+
+# Next in roadmap
+- self ddos tools
+- performance
+- feedbacks/alerting
+- ip blocklist/safelist with mask/subnet

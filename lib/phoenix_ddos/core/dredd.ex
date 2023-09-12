@@ -5,15 +5,12 @@ defmodule PhoenixDDoS.Dredd do
 
   import Plug.Conn
 
-  def reject(%Plug.Conn{} = conn) do
-    if config(:raise_on_reject, false) do
-      raise "PhoenixDDoS: too much request"
-    else
-      conn |> put_status(config(:http_code_on_reject, 429)) |> halt()
-    end
-  end
+  @http_code Application.compile_env(:phoenix_ddos, :http_code_on_reject, 429)
+  @raise_on_reject Application.compile_env(:phoenix_ddos, :raise_on_reject, false)
 
-  defp config(key, default) do
-    Application.get_env(:phoenix_ddos, key, default)
+  if @raise_on_reject do
+    def reject(conn), do: raise("PhoenixDDoS: too much request")
+  else
+    def reject(conn), do: conn |> Plug.Conn.send_resp(@http_code, []) |> halt()
   end
 end

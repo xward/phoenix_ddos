@@ -3,6 +3,8 @@ defmodule PhoenixDDoS.Engine do
 
   require Logger
 
+  alias PhoenixDDoS.TemplateHelper
+
   # --------------------------------------------------------------
   # main control
   # --------------------------------------------------------------
@@ -56,45 +58,65 @@ defmodule PhoenixDDoS.Engine do
   end
 
   # --------------------------------------------------------------
-  # pre-configuration
+  # prepare configuration
   # --------------------------------------------------------------
 
   def init, do: configure()
+
+  @protections [
+    PhoenixDDoS.IpRateLimit,
+    PhoenixDDoS.IpRateLimitPerRequestPath
+  ]
 
   def configure do
     Application.put_env(
       :phoenix_ddos,
       :_prots,
-      [
-        PhoenixDDoS.IpRateLimit,
-        PhoenixDDoS.IpRateLimitPerRequestPath
-      ]
-      |> Enum.map(fn module ->
-        module
+      @protections
+      |> Enum.map(fn prot ->
+        prot
         |> fetch_protection_configurations()
         |> Enum.map(&prepare_prot_cfgs/1)
         |> List.flatten()
       end)
       |> List.flatten()
     )
+
+    # generate PhoenixDDoS.RequestPath
+    registers =
+      Application.get_env(:phoenix_ddos, :_prots)
+      |> Enum.filter(fn {prot, _cfg} ->
+        Keyword.has_key?(prot.__info__(:functions), :register_request_path)
+      end)
+      |> Enum.map(fn {prot, cfg} ->
+        cfg
+        |> prot.register_request_path()
+        |> Enum.map(fn {id, path} ->
+          {id, path_to_pattern_match_chunk(path)}
+        end)
+      end)
+      |> List.flatten()
+
+    TemplateHelper.compile(%{registers: registers}, "request_path")
   end
 
-  defp prepare_prot_cfgs({module, cfg_src}) do
+  defp prepare_prot_cfgs({prot, cfg_src}) do
     cfg_src
     |> Map.new()
     |> put_id()
     |> put_sentence()
-    |> module.prepare_config()
+    |> prot.prepare_config()
     # a prepare_config may split itself in a list of cfg
+    # if so, we need to regenerated id for each
     |> case do
-      cfgs when is_list(cfgs) -> cfgs |> Enum.map(fn cfg -> {module, cfg} end)
-      cfg -> {module, cfg}
+      cfgs when is_list(cfgs) -> cfgs |> Enum.map(fn cfg -> {prot, cfg |> put_id()} end)
+      cfg -> {prot, cfg}
     end
   end
 
-  defp fetch_protection_configurations(module) do
+  defp fetch_protection_configurations(prot) do
     Application.get_env(:phoenix_ddos, :protections)
-    |> Enum.filter(fn {mod, _} -> mod == module end)
+    |> Enum.filter(fn {p, _} -> p == prot end)
   end
 
   defp rand_id, do: :crypto.strong_rand_bytes(3) |> Base.encode64()
@@ -107,4 +129,18 @@ defmodule PhoenixDDoS.Engine do
   defp put_sentence(cfg), do: cfg |> Map.put(:jail_time, default_jail_time()) |> put_sentence()
 
   defp default_jail_time, do: Application.get_env(:phoenix_ddos, :jail_time, {15, :minutes})
+
+  # transform "/admin/:id/dashboard" to "_, "admin", _, "dashboard""
+  defp path_to_pattern_match_chunk(path) do
+    path
+    |> String.split("/")
+    |> Enum.map_join(
+      ", ",
+      fn
+        "" -> "_"
+        <<":", _rest::binary>> -> "_"
+        chunk -> "\"#{chunk}\""
+      end
+    )
+  end
 end

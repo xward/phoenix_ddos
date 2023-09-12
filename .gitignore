@@ -25,5 +25,4 @@ phoenix_ddos-*.tar
 # Temporary files, for example, from tests.
 /tmp/
 
-
-notes.md
+todo.md

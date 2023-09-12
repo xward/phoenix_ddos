@@ -7,12 +7,11 @@ defmodule PhoenixDDoS.Application do
   require Logger
 
   def start(_type, _args) do
-    config = %{}
-    link = PhoenixDDoS.Supervisor.start_link(config, name: PhoenixDDoS.Supervisor)
+    link = PhoenixDDoS.Supervisor.start_link(%{}, name: PhoenixDDoS.Supervisor)
 
     PhoenixDDoS.Engine.init()
 
-    protections_count = length(Application.get_env(:phoenix_ddos, :prots, []))
+    protections_count = length(Application.get_env(:phoenix_ddos, :_prots, []))
 
     if protections_count > 0 do
       Logger.info("PhoenixDDoS ready with #{protections_count} protections.")

@@ -1,7 +1,7 @@
 defmodule PhoenixDDoS.MixProject do
   use Mix.Project
 
-  @version "0.7.11"
+  @version "0.7.17"
   @source_url "https://github.com/xward/phoenix_ddos"
 
   def project do
@@ -32,7 +32,7 @@ defmodule PhoenixDDoS.MixProject do
       """,
       # Dialyzer
       dialyzer: [
-        plt_add_apps: [:ex_unit],
+        plt_add_apps: [:ex_unit, :mix],
         plt_core_path: "_build/#{Mix.env()}",
         flags: [:error_handling, :missing_return, :underspecs]
       ],
@@ -43,6 +43,8 @@ defmodule PhoenixDDoS.MixProject do
       docs: [
         # The main page in the docs
         main: "PhoenixDDoS",
+        source_ref: "v#{@version}",
+        source_url: @source_url,
         # logo: "path/to/logo.png",
         extras: ["README.md"],
         groups_for_modules: groups_for_modules()

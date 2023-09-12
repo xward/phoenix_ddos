@@ -21,7 +21,7 @@ defmodule PhoenixDDoS.Jail do
     exist
   end
 
-  # you have powerful friend !
+  # you have a powerful friend !
   def bail_out(ip) do
     Cachex.del(:phoenix_ddos_jail, ip)
     Cachex.del(:phoenix_ddos_jail, "suspicious_#{ip}")

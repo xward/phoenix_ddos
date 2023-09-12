@@ -1,0 +1,13 @@
+
+defmodule PhoenixDDoS.RequestPath do
+
+  def match?(id, path) when is_binary(path) do
+    __MODULE__.match?(id, String.split(path, "/"))
+  end
+
+<%= for {id, chunks} <- registers do %>
+  def match?("<%= id %>", [<%= chunks %>]), do: true
+<% end %>
+
+  def match?(_, _), do: false
+end

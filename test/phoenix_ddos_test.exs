@@ -107,9 +107,15 @@ defmodule PhoenixDDoSTest do
     test "IpRateLimitPerRequestPath" do
       [
         {PhoenixDDoS.IpRateLimitPerRequestPath,
-         request_paths: ["/admin"], allowed: 3, period: {1, :minute}, jail_time: nil}
+         request_paths: ["/admin/:id/dashboard", "/admin"],
+         allowed: 3,
+         period: {1, :minute},
+         jail_time: nil}
       ]
       |> put_protections()
+
+      conn = %Plug.Conn{remote_ip: @an_ip, request_path: "/admin/23/dashboard"}
+      run_ddos(conn, assert_fail_after_request: 3)
 
       conn = %Plug.Conn{remote_ip: @an_ip, request_path: "/admin"}
       run_ddos(conn, assert_fail_after_request: 3)
@@ -121,7 +127,11 @@ defmodule PhoenixDDoSTest do
     test "IpRateLimitPerRequestPath shared quota along all paths" do
       [
         {PhoenixDDoS.IpRateLimitPerRequestPath,
-         request_paths: ["/admin", "/user"], allowed: 3, shared: true, jail_time: nil, period: {1, :minute}}
+         request_paths: ["/admin", "/user"],
+         allowed: 3,
+         shared: true,
+         jail_time: nil,
+         period: {1, :minute}}
       ]
       |> put_protections()
 
