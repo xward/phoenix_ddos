@@ -25,6 +25,11 @@ High performance application-layer DDoS protection for Elixir Phoenix.
 # Table of contents
 
 
+Monitoring
+  Telemetry
+  Send notification to sentry
+
+
 # Features
 
 ip safelist_ips
@@ -87,16 +92,20 @@ config :phoenix_ddos,
   ]
 ```
 
-| Type | Option                 | Default | Description                                                               |
-| :--- | :--------------------- | :------ | :------------------------------------------------------------------------ |
-| bool | `enabled`              | true    | set false to disable                                                      |
-| int  | `jail_time` (minutes)  | 15      | time an ip is fully blocked if caught by a protection. set nil to disable |
-| bool | `raise_on_reject`      | false   | raise when we reject a connexion instead of returning an http code error  |
-| int  | `http_code_on_reject`  | 429     | http code returned when we reject a connexion                             |
-| list | `protections`          |         | @see Protections                                                          |
-| list | `safelist_ips`         |         | bypass all protections ips                                                |
-| list | `blocklist_ips`        |         | always blocked ips                                                        |
+| Type | Option                    | Default | Description                                                               |
+| :--- | :------------------------ | :------ | :------------------------------------------------------------------------ |
+| bool | `enabled`                 | true    | set false to disable                                                      |
+| int  | `jail_time` (minutes)     | 15      | time an ip is fully blocked if caught by a protection. set nil to disable |
+| bool | `raise_on_reject`         | false   | raise when we reject a connexion instead of returning an http code error  |
+| int  | `http_code_on_reject`     | 429     | http code returned when we reject a connexion                             |
+| list | `protections`             |         | @see Protections                                                          |
+| list | `safelist_ips`            |         | bypass all protections ips                                                |
+| list | `blocklist_ips`           |         | always blocked ips                                                        |
+| bool | `on_jail_alert_to_sentry` | false   | notify slack when an ip get jailed                                        |
 
+## Telemetry
+
+<NYI>
 
 ## Play with it
 
