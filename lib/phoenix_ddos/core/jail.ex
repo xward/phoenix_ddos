@@ -4,16 +4,21 @@ defmodule PhoenixDDoS.Jail do
   # Ip got caught, go to jail ! Skipping request count
 
   alias PhoenixDDoS.Monitoring.AlertSentry
+  alias PhoenixDDoS.Telemetry
   alias PhoenixDDoS.Time
 
   @sentry Application.compile_env(:phoenix_ddos, :on_jail_alert_to_sentry)
 
   def send(ip, {_module, cfg} = _prot) do
+    Cachex.put(:phoenix_ddos_jail, ip, true, ttl: Time.period_to_msec(cfg.jail_time))
+
     {:ok, _} = Cachex.put(:phoenix_ddos_jail, "suspicious_#{ip}", ttl: :timer.hours(6))
 
     if @sentry, do: AlertSentry.alert_goes_to_jail(ip)
+    Telemetry.push([:phoenix_ddos, :jail, :new], %{ip: ip})
 
-    Cachex.put(:phoenix_ddos_jail, ip, true, ttl: Time.period_to_msec(cfg.jail_time))
+    {:ok, total} = Cachex.size(:phoenix_ddos_jail)
+    Telemetry.push([:phoenix_ddos, :jail, :count], %{total: total})
   end
 
   def in_jail?(ip) do

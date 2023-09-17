@@ -3,6 +3,7 @@ defmodule PhoenixDDoS.Engine do
 
   require Logger
 
+  alias PhoenixDDoS.Telemetry
   alias PhoenixDDoS.TemplateHelper
 
   # --------------------------------------------------------------
@@ -98,6 +99,16 @@ defmodule PhoenixDDoS.Engine do
       |> List.flatten()
 
     TemplateHelper.compile(%{registers: registers}, "request_path")
+
+    protections_count = length(Application.get_env(:phoenix_ddos, :_prots, []))
+
+    if protections_count > 0 do
+      Logger.info("PhoenixDDoS ready with #{protections_count} protections.")
+    else
+      Logger.warning("PhoenixDDoS no protection configured")
+    end
+
+    Telemetry.push([:phoenix_ddos, :engine, :init], %{protections_count: protections_count})
   end
 
   defp prepare_prot_cfgs({prot, cfg_src}) do

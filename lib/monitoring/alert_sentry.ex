@@ -2,7 +2,6 @@ defmodule PhoenixDDoS.Monitoring.AlertSentry do
   @moduledoc false
 
   def alert_goes_to_jail(ip, extra \\ %{}) do
-
     attrs = [
       "PhoenixDDoS: new ip enter jail",
       extra: %{ip: ip} |> Map.merge(extra)
