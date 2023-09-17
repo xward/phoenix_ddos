@@ -3,6 +3,8 @@ defmodule PhoenixDDoS.Engine do
 
   require Logger
 
+  alias PhoenixDDoS.Dredd
+  alias PhoenixDDoS.Jail
   alias PhoenixDDoS.Telemetry
   alias PhoenixDDoS.TemplateHelper
 
@@ -16,13 +18,13 @@ defmodule PhoenixDDoS.Engine do
 
     cond do
       ip in Application.get_env(:phoenix_ddos, :blocklist_ips, []) ->
-        PhoenixDDoS.Dredd.reject(conn)
+        Dredd.reject(conn)
 
       ip in Application.get_env(:phoenix_ddos, :safelist_ips, []) ->
         conn
 
-      PhoenixDDoS.Jail.in_jail?(ip) ->
-        PhoenixDDoS.Dredd.reject(conn)
+      Jail.in_jail?(ip) ->
+        Dredd.reject(conn)
 
       true ->
         # suggestion perf: upgrade using execution block || custom ETS
@@ -38,19 +40,26 @@ defmodule PhoenixDDoS.Engine do
 
         cond do
           decisions[:jail] ->
+            prot = decisions[:jail]
+
             Logger.warning(
-              "PhoenixDDoS: ip[#{ip}] goes to JAIL. From prot #{inspect(decisions[:jail])} with love"
+              "🛡️ PhoenixDDoS: ip[#{ip}] goes to JAIL. From prot #{inspect(prot)} with love"
             )
 
-            PhoenixDDoS.Jail.send(ip, decisions[:jail])
-            PhoenixDDoS.Dredd.reject(conn)
+            Jail.send(ip, prot)
+
+            Telemetry.push([:jail, :new], %{}, %{ip: ip, protection: prot})
+
+            Dredd.reject(conn)
 
           decisions[:block] ->
+            prot = decisions[:block]
+
             Logger.warning(
-              "PhoenixDDoS: ip[#{ip}] request reject. From prot #{inspect(decisions[:block])} with love"
+              "🛡️ PhoenixDDoS: ip[#{ip}] request reject. From prot #{inspect(prot)} with love"
             )
 
-            PhoenixDDoS.Dredd.reject(conn)
+            Dredd.reject(conn)
 
           true ->
             conn
@@ -103,12 +112,12 @@ defmodule PhoenixDDoS.Engine do
     protections_count = length(Application.get_env(:phoenix_ddos, :_prots, []))
 
     if protections_count > 0 do
-      Logger.info("PhoenixDDoS ready with #{protections_count} protections.")
+      Logger.info("🛡️ PhoenixDDoS ready with #{protections_count} protections.")
     else
-      Logger.warning("PhoenixDDoS no protection configured")
+      Logger.warning("🛡️ PhoenixDDoS no protection configured")
     end
 
-    Telemetry.push([:phoenix_ddos, :engine, :init], %{protections_count: protections_count})
+    Telemetry.push([:phoenix_ddos, :engine, :init], %{protections_count: protections_count}, %{})
   end
 
   defp prepare_prot_cfgs({prot, cfg_src}) do

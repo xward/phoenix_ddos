@@ -27,7 +27,11 @@ defmodule PhoenixDDoS.Telemetry do
   """
 
   @doc false
-  def push(event, mesurements) do
-    :telemetry.execute(event, mesurements |> Map.merge(%{system_time: DateTime.utc_now()})) |> IO.inspect
+  def push(event, mesurements, metas) do
+    :telemetry.execute(
+      [:phoenix_ddos] ++ event,
+      mesurements |> Map.merge(%{system_time: DateTime.utc_now()}),
+      metas
+    )
   end
 end
