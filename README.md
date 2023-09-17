@@ -105,7 +105,7 @@ config :phoenix_ddos,
 
 ## Telemetry
 
-<NYI>
+@see module PhoenixDDoS.Telemetry
 
 ## Play with it
 

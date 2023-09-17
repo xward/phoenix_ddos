@@ -17,7 +17,7 @@ defmodule PhoenixDDoS.Jail do
     if @sentry, do: AlertSentry.alert_goes_to_jail(ip, %{protection: prot})
 
     {:ok, total} = Cachex.size(:phoenix_ddos_jail)
-    Telemetry.push([:phoenix_ddos, :jail, :count], %{total: total}, %{})
+    Telemetry.push([:jail, :count], %{total: total}, %{})
   end
 
   def in_jail?(ip) do

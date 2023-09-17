@@ -117,7 +117,7 @@ defmodule PhoenixDDoS.Engine do
       Logger.warning("🛡️ PhoenixDDoS no protection configured")
     end
 
-    Telemetry.push([:phoenix_ddos, :engine, :init], %{protections_count: protections_count}, %{})
+    Telemetry.push([:engine, :init], %{protections_count: protections_count}, %{})
   end
 
   defp prepare_prot_cfgs({prot, cfg_src}) do

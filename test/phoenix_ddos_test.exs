@@ -11,6 +11,7 @@ defmodule PhoenixDDoSTest do
   import PhoenixDDoS.DDOSUtils
 
   @an_ip {1, 2, 3, 4}
+  @an_ip_str @an_ip |> :inet.ntoa()
   @another_ip {1, 2, 3, 5}
 
   describe "call/2" do
@@ -20,6 +21,17 @@ defmodule PhoenixDDoSTest do
       Application.put_env(:phoenix_ddos, :safelist_ips, [])
       Application.put_env(:phoenix_ddos, :blocklist_ips, [])
       flush_protections()
+
+      # https://elixirforum.com/t/testing-and-telemetry-events-how-to-test-if-they-are-sent/28273
+      :telemetry.attach(
+        "unit_test_telemetry",
+        [:phoenix_ddos, :jail, :new],
+        fn name, measurements, metadata, _config ->
+          send(self(), {:telemetry_event, name, measurements, metadata})
+        end,
+        nil
+      )
+
       :ok
     end
 
@@ -49,6 +61,8 @@ defmodule PhoenixDDoSTest do
       assert_not_in_jail(@an_ip)
       run_ddos(conn(), assert_fail_after_request: 10)
       assert_in_jail(@an_ip)
+
+      assert_receive {:telemetry_event, [:phoenix_ddos, :jail, :new], %{}, %{ip: @an_ip_str}}
 
       :timer.sleep(3000)
       # still blocked, even if we waited more than period
