@@ -2,8 +2,6 @@
 
 High performance application-layer DDoS protection for Elixir Phoenix.
 
-> :warning: The project was created very recently, gimme time to bring it to a well documented v1 !
-
 <p align="center">
   <a href="https://hexdocs.pm/phoenix_ddos/PhoenixDDoS.html">
     <img alt="Hex Docs" src="http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat">
@@ -25,10 +23,13 @@ High performance application-layer DDoS protection for Elixir Phoenix.
 # Table of contents
 
 
+
 Monitoring
   Telemetry
   Send notification to sentry
 
+
+Benchmarks
 
 # Features
 
@@ -36,9 +37,14 @@ ip safelist_ips
 
 ip blocklist_ips
 
+log skip on blocked request (avoid log saturation)
+
 `PhoenixDDoS.IpRateLimit`
 
 `PhoenixDDoS.IpRateLimitPerRequestPath`
+
+sentry
+telemetry
 
 
 # Usage
@@ -187,7 +193,11 @@ is equivalant to:
 
 
 # Next in roadmap
-- self ddos tools
-- performance
-- feedbacks/alerting
+- telemetry
+- configuration validation
 - ip blocklist/safelist with mask/subnet
+
+
+# Contact / Support
+
+slack: elixir-lang.slack.com channel #phoenix_ddos

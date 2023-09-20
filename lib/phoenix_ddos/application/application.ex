@@ -5,7 +5,7 @@ defmodule PhoenixDDoS.Application do
   use Application
 
   def start(_type, _args) do
-    PhoenixDDoS.Engine.init()
+    PhoenixDDoS.Configure.init()
     PhoenixDDoS.Supervisor.start_link(%{}, name: PhoenixDDoS.Supervisor)
   end
 end

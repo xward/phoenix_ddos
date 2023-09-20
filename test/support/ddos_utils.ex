@@ -5,7 +5,7 @@ defmodule PhoenixDDoS.DDOSUtils do
 
   def put_protections(protections) do
     Application.put_env(:phoenix_ddos, :protections, protections)
-    PhoenixDDoS.Engine.init()
+    PhoenixDDoS.Configure.init()
   end
 
   def flush_protections, do: [] |> put_protections()
@@ -31,7 +31,7 @@ defmodule PhoenixDDoS.DDOSUtils do
     end)
   end
 
-  def run_ddos(conn, opts \\ []), do: run_ddos(conn, Map.new(opts))
+  def run_ddos(conn, opts), do: run_ddos(conn, Map.new(opts))
 
   def call(conn, opts \\ []) do
     PhoenixDDoS.call(conn, PhoenixDDoS.init(opts))

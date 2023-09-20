@@ -1,7 +1,7 @@
 defmodule PhoenixDDoS.MixProject do
   use Mix.Project
 
-  @version "0.7.18"
+  @version "0.7.19"
   @source_url "https://github.com/xward/phoenix_ddos"
 
   def project do
@@ -14,6 +14,7 @@ defmodule PhoenixDDoS.MixProject do
       deps: deps(),
       aliases: aliases(),
       preferred_cli_env: [
+        benchmark: :test,
         credo: :test,
         ci: :test
       ],
@@ -69,7 +70,8 @@ defmodule PhoenixDDoS.MixProject do
     ]
   end
 
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(:test), do: ["lib", "test/support", "benchmark"]
+  defp elixirc_paths(:dev), do: ["lib"]
   defp elixirc_paths(_env), do: ["lib"]
 
   # Run "mix help deps" to learn about dependencies.
@@ -86,6 +88,7 @@ defmodule PhoenixDDoS.MixProject do
 
   defp aliases do
     [
+      benchmark: "run benchmark/benchmark.exs",
       credo: "credo --strict",
       ci: [
         "format --check-formatted",

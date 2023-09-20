@@ -1,0 +1,101 @@
+
+defmodule PhoenixDDoS.Checkers do
+
+<%= if ip_registers != [] do %>
+  def checkers(ip) do
+    [
+      <%= for {prot, cfg} <- ip_registers do %>
+        {"<%= cfg.id %>", <%= prot %>.rate_key("<%= cfg.id %>", ip),<%= PhoenixDDoS.Time.period_to_msec(cfg.period) %>, <%=  cfg.allowed %>, :<%=  cfg.sentence %>},
+      <% end %>
+    ]
+  end
+<% else %>
+  def checkers(_), do: []
+
+<% end %>
+
+<%= for {chunks, prots} <- request_path_registers do %>
+  def checkers(ip, [<%= chunks %>]) do
+    [
+<%= prots |> Enum.map(fn {prot, cfg} -> %>
+      {"<%= cfg.id %>", <%= prot %>.rate_key("<%= cfg.id %>", ip),<%= PhoenixDDoS.Time.period_to_msec(cfg.period) %>, <%=  cfg.allowed %>, :<%=  cfg.sentence %>},
+<% end) %>
+    ] ++ checkers(ip)
+  end
+<% end %>
+
+  def checkers(ip, _), do: checkers(ip)
+end
+
+defmodule PhoenixDDoS.Engine do
+  alias PhoenixDDoS.Checkers
+  alias PhoenixDDoS.Dredd
+  alias PhoenixDDoS.Jail
+  alias PhoenixDDoS.RateLimit
+
+  require Logger
+
+  <% # returns {decision, prot_that_decide_it} %>
+  def control(conn) do
+    ip = conn.remote_ip |> :inet.ntoa()
+
+    cond do
+<%= if Application.get_env(:phoenix_ddos, :blocklist_ips, []) != [] do %>
+      ip in <%= inspect(Application.get_env(:phoenix_ddos, :blocklist_ips)) %> ->
+        Dredd.reject(conn)
+<% end %>
+<%= if Application.get_env(:phoenix_ddos, :safelist_ips, []) != [] do %>
+      ip in <%= inspect(Application.get_env(:phoenix_ddos, :safelist_ips)) %> ->
+        conn
+<% end %>
+
+      Jail.in_jail?(ip) ->
+        Dredd.reject(conn)
+
+      true ->
+
+        decisions =
+<%= if request_path_registers != [] do %>
+        ip
+        |> Checkers.checkers( String.split(conn.request_path, "/"))
+<% else %>
+        ip
+        |> Checkers.checkers()
+<% end %>
+        # |> IO.inspect()
+        |> RateLimit.batch_check()
+        # |> IO.inspect()
+
+        cond do
+          decisions[:jail] ->
+            prot = get_prot_cfg(decisions[:jail])
+
+            Logger.warning(
+              "🛡️ PhoenixDDoS: ip[#{ip}] goes to JAIL. From prot #{inspect(prot)} with love"
+            )
+
+            Jail.send(ip, prot)
+
+            Dredd.reject(conn)
+
+          decisions[:block] ->
+            prot = get_prot_cfg(decisions[:block])
+
+            Logger.warning(
+              "🛡️ PhoenixDDoS: ip[#{ip}] request reject. From prot #{inspect(prot)} with love"
+            )
+
+            Dredd.reject(conn)
+
+          true ->
+            conn
+        end
+      end
+  end
+
+
+<%= for {prot, cfg} <- Application.get_env(:phoenix_ddos,:_prots) do %>
+  def get_prot_cfg("<%= cfg.id %>"), do: {<%= prot %>, <%= inspect(cfg) %>}
+<% end %>
+  def get_prot_cfg(_), do: {nil, nil}
+end

@@ -26,3 +26,6 @@ phoenix_ddos-*.tar
 /tmp/
 
 todo.md
+
+*.ex_
+*.exs_

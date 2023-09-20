@@ -12,6 +12,7 @@ defmodule PhoenixDDoS.TemplateHelper do
     template_name
     |> template()
     |> EEx.eval_file(Keyword.new(context))
+    # |> inspect_code()
     |> Code.compile_string()
 
     Code.put_compiler_option(:ignore_module_conflict, false)
@@ -24,6 +25,8 @@ defmodule PhoenixDDoS.TemplateHelper do
   # --------------------------------------------------------------
 
   def inspect_code(content) do
+    IO.puts("-----------------------------------------------------------------")
+
     try do
       content
       |> Code.format_string!()

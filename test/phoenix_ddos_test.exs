@@ -10,8 +10,10 @@ defmodule PhoenixDDoSTest do
 
   import PhoenixDDoS.DDOSUtils
 
+  alias PhoenixDDoS.Test.TelemetryUtils
+
   @an_ip {1, 2, 3, 4}
-  @an_ip_str @an_ip |> :inet.ntoa()
+  @an_ip_charlist @an_ip |> :inet.ntoa()
   @another_ip {1, 2, 3, 5}
 
   describe "call/2" do
@@ -26,9 +28,7 @@ defmodule PhoenixDDoSTest do
       :telemetry.attach(
         "unit_test_telemetry",
         [:phoenix_ddos, :jail, :new],
-        fn name, measurements, metadata, _config ->
-          send(self(), {:telemetry_event, name, measurements, metadata})
-        end,
+        &TelemetryUtils.handle_telemetry_event/4,
         nil
       )
 
@@ -36,7 +36,11 @@ defmodule PhoenixDDoSTest do
     end
 
     test "safelist_ips" do
-      Application.put_env(:phoenix_ddos, :safelist_ips, [@an_ip |> :inet.ntoa()])
+      # let mix ip format
+      Application.put_env(:phoenix_ddos, :safelist_ips, [
+        @an_ip |> :inet.ntoa() |> List.to_string(),
+        @another_ip |> :inet.ntoa()
+      ])
 
       [
         {PhoenixDDoS.IpRateLimit, allowed: 0, period: {2, :second}}
@@ -44,10 +48,12 @@ defmodule PhoenixDDoSTest do
       |> put_protections()
 
       run_ddos(conn(), :never_fail)
+      run_ddos(conn(%{remote_ip: @another_ip}), :never_fail)
     end
 
     test "blocklist_ips" do
       Application.put_env(:phoenix_ddos, :blocklist_ips, [@an_ip |> :inet.ntoa()])
+      PhoenixDDoS.Configure.init()
 
       run_ddos(conn(), :always_fail)
     end
@@ -62,7 +68,7 @@ defmodule PhoenixDDoSTest do
       run_ddos(conn(), assert_fail_after_request: 10)
       assert_in_jail(@an_ip)
 
-      assert_receive {:telemetry_event, [:phoenix_ddos, :jail, :new], %{}, %{ip: @an_ip_str}}
+      assert_receive {:telemetry_event, [:phoenix_ddos, :jail, :new], %{}, %{ip: @an_ip_charlist}}
 
       :timer.sleep(3000)
       # still blocked, even if we waited more than period
