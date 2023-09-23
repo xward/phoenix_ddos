@@ -16,6 +16,6 @@ defmodule PhoenixDDoS do
   if Application.compile_env(:phoenix_ddos, :enabled) == false do
     def call(conn, _opts), do: conn
   else
-    def call(%Plug.Conn{} = conn, _opts), do: PhoenixDDoS.Engine.control(conn)
+    def call(%Plug.Conn{} = conn, _opts), do: Engine.control(conn)
   end
 end

@@ -2,6 +2,7 @@
 
 High performance application-layer DDoS protection for Elixir Phoenix.
 
+
 <p align="center">
   <a href="https://hexdocs.pm/phoenix_ddos/PhoenixDDoS.html">
     <img alt="Hex Docs" src="http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat">
@@ -19,25 +20,24 @@ High performance application-layer DDoS protection for Elixir Phoenix.
 
 # Table of contents
 
-Usage
-  Installation
-  Configuration
+- [Features](#features)
+- [Setup](#installation)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+- [Monitoring]()
+  - [Telemetry events]()
+  - [Sentry]()
+- [Local tooling]()
+  - DDoS youself using siege (mix phoenix_ddos.attack_myself)
+- [Benchmark](https://github.com/xward/phoenix_ddos/blob/master/docs/benchmark.md)
+- [Community](#community)
+- [Next in roadmap](#next-in-roadmap)
+- [Contributing](#contributing)
 
+
+Telemetry events (@see module PhoenixDDoS.Telemetry)
+Notification to sentry
 How it works (you defined rules and list, it can put in jail or just block if it reach any threshold)
-
-Features
-
-Monitoring
-  Telemetry events (@see module PhoenixDDoS.Telemetry)
-  Notification to sentry
-
-Local tests
-  DDoS youself using siege (mix phoenix_ddos.attack_myself)
-
-Benchmarks
-
-Community
-Next in roadmap
 
 # Features
 
@@ -58,7 +58,7 @@ local tools: ddos youself testing
 # Usage
 <!-- MDOC -->
 
-`phoenix_ddos` is a high perContact / Supportformance application-layer DDoS protection for Elixir Phoenix.
+`phoenix_ddos` is a high performance application-layer DDoS protection for Elixir Phoenix.
 
 ## Installation
 
@@ -111,27 +111,30 @@ config :phoenix_ddos,
 | int  | `jail_time` (minutes)     | 15      | time an ip is fully blocked if caught by a protection. set nil to disable thus blocking instead |
 | bool | `raise_on_reject`         | false   | raise when we reject a connexion instead of returning an http code error                        |
 | int  | `http_code_on_reject`     | 429     | http code returned when we reject a connexion                                                   |
-| list | `protections`             |         | @see Protections                                                                                |
+| list | `protections`             |         | @see [Protections examples][protection_examples]                                                |
 | list | `safelist_ips`            |         | bypass all protections ips                                                                      |
 | list | `blocklist_ips`           |         | always blocked ips                                                                              |
 | bool | `on_jail_alert_to_sentry` | false   | notify slack when an ip get jailed                                                              |
 
 
-### Examples with `PhoenixDDoS.IpRateLimit`
+[protection_examples]: #examples-with-protection-phoenixddosipratelimit
+
+
+### Examples with protection `PhoenixDDoS.IpRateLimit`
 
 1. 500 per minute max, if triggered ip will be in jail for 15 minutes
 ```elixir
   [{PhoenixDDoS.IpRateLimit, allowed: 500, period: {1, :minute}}]
 ```
 
-2. disable jail, ip will only be throttle to 500 per minute
+2. disable jail, ip will be throttle to 500 per minute
 ```elixir
   [{PhoenixDDoS.IpRateLimit, allowed: 500, period: {1, :minute}, jail_time: nil}]
 ```
 
-### Examples with `PhoenixDDoS.IpRateLimitPerRequestPath`
+### Examples with protection `PhoenixDDoS.IpRateLimitPerRequestPath`
 
-1. single route
+1. single route /graphql with a 20 per minute max, if triggered ip will be in jail for 15 minutes
 ```elixir
     [{PhoenixDDoS.IpRateLimitPerRequestPath,
      request_paths: ["/graphql"], allowed: 20, period: {1, :minute}}]
@@ -168,13 +171,32 @@ is equivalant to:
 [remote_ip_github]: https://github.com/ajvondrak/remote_ip
 
 
-# Community
+## Community
 
 Slack: join [elixir-lang](https://elixir-lang.slack.com/) and join channel `#phoenix_ddos`
 
 
-
 ## Next in roadmap
+
+- release a v1
 - ip blocklist/safelist with mask/subnet
-- log central to avoid log spam and provide aggregated report
+- log central genserver to avoid log spam and create possibility provide aggregated report
 - more performances
+- out of jail system: an attacker ip would go out of jail and will make some damage again before being put in jail, prevent that
+
+
+## contributing
+
+[Create issues](https://github.com/xward/phoenix_ddos/issues) on github for any bug or issue.
+
+To contribute on the code, please clone and use following tools:
+
+run tests
+```
+mix test
+```
+
+run release code validation
+```
+mix ci
+```

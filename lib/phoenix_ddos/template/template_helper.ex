@@ -32,8 +32,7 @@ defmodule PhoenixDDoS.TemplateHelper do
     IO.puts("-----------------------------------------------------------------")
 
     try do
-      content
-      |> Code.format_string!()
+      content |> Code.format_string!()
     rescue
       _ ->
         content
@@ -46,7 +45,5 @@ defmodule PhoenixDDoS.TemplateHelper do
     content
   end
 
-  defp print(content) do
-    Logger.info(["\n", content])
-  end
+  defp print(content), do: Logger.info(["\n", content])
 end
