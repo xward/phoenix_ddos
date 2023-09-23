@@ -8,7 +8,7 @@ defmodule Mix.Tasks.PhoenixDdos.AttackMyself do
   """
 
   @target "http://127.0.0.1:4000"
-  @confirmation_message "This will spam request to #{IO.ANSI.cyan()}#{@target}#{IO.ANSI.reset()}. Procceed ?"
+  @confirmation_message "This will spam request to #{IO.ANSI.cyan()}#{@target}#{IO.ANSI.reset()} during 20 seconds. Procceed ?"
 
   @impl true
   def run(args) when is_list(args) do
@@ -16,7 +16,7 @@ defmodule Mix.Tasks.PhoenixDdos.AttackMyself do
 
     Mix.Shell.IO.yes?(@confirmation_message)
 
-    System.cmd("siege", [@target])
+    System.cmd("siege", ["-t20S", @target])
   end
 
   defp ensure_siege_installed! do

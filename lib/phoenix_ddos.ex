@@ -18,14 +18,4 @@ defmodule PhoenixDDoS do
   else
     def call(%Plug.Conn{} = conn, _opts), do: PhoenixDDoS.Engine.control(conn)
   end
-
-  @doc """
-  Provide in-iex stats
-  """
-  def stats do
-    # show leaderboard of most spammy ip
-    # reject conn count
-
-    IO.puts("stats here")
-  end
 end

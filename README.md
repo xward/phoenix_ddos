@@ -6,15 +6,12 @@ High performance application-layer DDoS protection for Elixir Phoenix.
   <a href="https://hexdocs.pm/phoenix_ddos/PhoenixDDoS.html">
     <img alt="Hex Docs" src="http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat">
   </a>
-
   <a href="https://github.com/xward/phoenix_ddos/actions/workflows/ci.yml">
     <img alt="CI Status" src="https://github.com/xward/phoenix_ddos/actions/workflows/ci.yml/badge.svg">
   </a>
-
   <a href="https://hex.pm/packages/phoenix_ddos">
     <img alt="Hex Version" src="https://img.shields.io/hexpm/v/phoenix_ddos.svg">
   </a>
-
   <a href="https://opensource.org/licenses/Apache-2.0">
     <img alt="Apache 2 License" src="https://img.shields.io/hexpm/l/phoenix_ddos">
   </a>
@@ -22,36 +19,46 @@ High performance application-layer DDoS protection for Elixir Phoenix.
 
 # Table of contents
 
+Usage
+  Installation
+  Configuration
 
+How it works (you defined rules and list, it can put in jail or just block if it reach any threshold)
+
+Features
 
 Monitoring
-  Telemetry
-  Send notification to sentry
+  Telemetry events (@see module PhoenixDDoS.Telemetry)
+  Notification to sentry
 
+Local tests
+  DDoS youself using siege (mix phoenix_ddos.attack_myself)
 
 Benchmarks
 
+Community
+Next in roadmap
+
 # Features
 
-ip safelist_ips
+protection: ip safelist_ips
+protection: ip blocklist_ips
+protection: `PhoenixDDoS.IpRateLimit`
+protection: `PhoenixDDoS.IpRateLimitPerRequestPath`
+protection: log flooding
 
-ip blocklist_ips
+engine: jail system
 
-log skip on blocked request (avoid log saturation)
+monitoring: telemetry
+monitoring: sentry
 
-`PhoenixDDoS.IpRateLimit`
-
-`PhoenixDDoS.IpRateLimitPerRequestPath`
-
-sentry
-telemetry
+local tools: ddos youself testing
 
 
 # Usage
-
 <!-- MDOC -->
 
-`phoenix_ddos` is a high performance application-layer DDoS protection for Elixir Phoenix.
+`phoenix_ddos` is a high perContact / Supportformance application-layer DDoS protection for Elixir Phoenix.
 
 ## Installation
 
@@ -86,7 +93,7 @@ end
 
 ```elixir
 config :phoenix_ddos,
-  safelist_ips: ["1.2,3,4", "5.6.7.0"],
+  safelist_ips: ["1.2.3.4", "5.6.7.0"],
   blocklist_ips: ["11.12.13.0"],
   protections: [
     # ip rate limit
@@ -98,49 +105,19 @@ config :phoenix_ddos,
   ]
 ```
 
-| Type | Option                    | Default | Description                                                               |
-| :--- | :------------------------ | :------ | :------------------------------------------------------------------------ |
-| bool | `enabled`                 | true    | set false to disable                                                      |
-| int  | `jail_time` (minutes)     | 15      | time an ip is fully blocked if caught by a protection. set nil to disable |
-| bool | `raise_on_reject`         | false   | raise when we reject a connexion instead of returning an http code error  |
-| int  | `http_code_on_reject`     | 429     | http code returned when we reject a connexion                             |
-| list | `protections`             |         | @see Protections                                                          |
-| list | `safelist_ips`            |         | bypass all protections ips                                                |
-| list | `blocklist_ips`           |         | always blocked ips                                                        |
-| bool | `on_jail_alert_to_sentry` | false   | notify slack when an ip get jailed                                        |
+| Type | Option                    | Default | Description                                                                                     |
+| :--- | :------------------------ | :------ | :---------------------------------------------------------------------------------------------- |
+| bool | `enabled`                 | true    | set false to disable                                                                            |
+| int  | `jail_time` (minutes)     | 15      | time an ip is fully blocked if caught by a protection. set nil to disable thus blocking instead |
+| bool | `raise_on_reject`         | false   | raise when we reject a connexion instead of returning an http code error                        |
+| int  | `http_code_on_reject`     | 429     | http code returned when we reject a connexion                                                   |
+| list | `protections`             |         | @see Protections                                                                                |
+| list | `safelist_ips`            |         | bypass all protections ips                                                                      |
+| list | `blocklist_ips`           |         | always blocked ips                                                                              |
+| bool | `on_jail_alert_to_sentry` | false   | notify slack when an ip get jailed                                                              |
 
-## Telemetry
 
-@see module PhoenixDDoS.Telemetry
-
-## Play with it
-
-after installation you can ddos yourself:
-
-```bash
-  mix phoenix_ddos.attack_myself
-```
-
-## Ip jail
-
-All protections that trigger a deny of an ip will push said ip into jail.
-
-Jail time ca be configured or disabled globally on per protection.
-
-# Motivation
-
-Add layer of protection within your phoenix application. Multi-layered DDoS protection is the best protection !
-
-Nothing exist in Elixir ecosytem, let's create it !
-
-you don't always have access to a ddos protection in between internet and your phoenix application
-You want advance ddos feature you can't have outside an applicative environment
-
-inspiration: [rack-attack][rack-attack_github]
-
-# Protections
-
-## Examples with `PhoenixDDoS.IpRateLimit`
+### Examples with `PhoenixDDoS.IpRateLimit`
 
 1. 500 per minute max, if triggered ip will be in jail for 15 minutes
 ```elixir
@@ -152,7 +129,7 @@ inspiration: [rack-attack][rack-attack_github]
   [{PhoenixDDoS.IpRateLimit, allowed: 500, period: {1, :minute}, jail_time: nil}]
 ```
 
-## Examples with `PhoenixDDoS.IpRateLimitPerRequestPath`
+### Examples with `PhoenixDDoS.IpRateLimitPerRequestPath`
 
 1. single route
 ```elixir
@@ -189,15 +166,15 @@ is equivalant to:
 ```
 
 [remote_ip_github]: https://github.com/ajvondrak/remote_ip
-[rack-attack_github]: https://github.com/ajvondrak/remote_ip
 
 
-# Next in roadmap
-- telemetry
-- configuration validation
+# Community
+
+Slack: join [elixir-lang](https://elixir-lang.slack.com/) and join channel `#phoenix_ddos`
+
+
+
+## Next in roadmap
 - ip blocklist/safelist with mask/subnet
-
-
-# Contact / Support
-
-slack: elixir-lang.slack.com channel #phoenix_ddos
+- log central to avoid log spam and provide aggregated report
+- more performances

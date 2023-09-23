@@ -22,39 +22,28 @@ defmodule Benchmark do
     [] |> put_protections()
   end
 
-  def put_prots(:one_ip) do
-    [
-      {PhoenixDDoS.IpRateLimit, allowed: 10_000, period: {2, :minute}}
-    ]
-    |> put_protections()
-  end
-
-  def put_prots(:one_path) do
+  def put_prots(:path, n) do
     [
       {PhoenixDDoS.IpRateLimitPerRequestPath,
-       request_paths: ["/admin"], allowed: 3, period: {1, :minute}}
-    ]
-    |> put_protections()
-  end
-
-  def put_prots(:a10_ips) do
-    (1..10)
-    |> Enum.map(fn i ->
-      {PhoenixDDoS.IpRateLimit, allowed: 10_000, period: {i, :minute}}
-    end)
-    |> put_protections()
-  end
-
-  def put_prots(:a500_paths) do
-    [
-      {PhoenixDDoS.IpRateLimitPerRequestPath,
-       request_paths: 1..500 |> Enum.map(fn i -> "/admin#{i}:id/user/#{i * 2}" end),
+       request_paths: 1..n |> Enum.map(fn i -> "/admin#{i}:id/user/#{i * 2}" end),
        allowed: 50,
        period: {1, :hour}}
     ]
     |> put_protections()
   end
 
+  def put_prots(:ip, n) do
+    1..n
+    |> Enum.map(fn i ->
+      {PhoenixDDoS.IpRateLimit, allowed: 10_000, period: {i, :minute}}
+    end)
+    |> put_protections()
+  end
 
+  # <span style="color:blue">some *blue* text</span>.
+  def print_speed(elapse_ms, count) do
+    cost = elapse_ms * 10_000 / count
 
+    "#{round(cost)} ms per 10_000 queries"
+  end
 end

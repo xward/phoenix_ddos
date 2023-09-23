@@ -18,6 +18,10 @@ defmodule PhoenixDDoS.TemplateHelper do
     Code.put_compiler_option(:ignore_module_conflict, false)
   end
 
+  def render_list(list) do
+    "[#{Enum.map_join(list, ", ", fn e -> inspect(e) end)}]"
+  end
+
   defp template(name), do: [__DIR__, "/#{name}.eex"]
 
   # --------------------------------------------------------------

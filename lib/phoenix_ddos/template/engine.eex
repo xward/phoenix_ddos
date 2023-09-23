@@ -41,11 +41,11 @@ defmodule PhoenixDDoS.Engine do
 
     cond do
 <%= if Application.get_env(:phoenix_ddos, :blocklist_ips, []) != [] do %>
-      ip in <%= inspect(Application.get_env(:phoenix_ddos, :blocklist_ips)) %> ->
+      ip in <%= PhoenixDDoS.TemplateHelper.render_list(Application.get_env(:phoenix_ddos, :blocklist_ips)) %> ->
         Dredd.reject(conn)
 <% end %>
 <%= if Application.get_env(:phoenix_ddos, :safelist_ips, []) != [] do %>
-      ip in <%= inspect(Application.get_env(:phoenix_ddos, :safelist_ips)) %> ->
+      ip in <%= PhoenixDDoS.TemplateHelper.render_list(Application.get_env(:phoenix_ddos, :safelist_ips)) %> ->
         conn
 <% end %>
 
@@ -79,11 +79,7 @@ defmodule PhoenixDDoS.Engine do
             Dredd.reject(conn)
 
           decisions[:block] ->
-            prot = get_prot_cfg(decisions[:block])
-
-            Logger.warning(
-              "🛡️ PhoenixDDoS: ip[#{ip}] request reject. From prot #{inspect(prot)} with love"
-            )
+            <% # for now we don't log block since it could cause log overload %>
 
             Dredd.reject(conn)
 
