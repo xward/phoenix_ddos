@@ -41,19 +41,15 @@ How it works (you defined rules and list, it can put in jail or just block if it
 
 # Features
 
-protection: ip safelist_ips
-protection: ip blocklist_ips
-protection: `PhoenixDDoS.IpRateLimit`
-protection: `PhoenixDDoS.IpRateLimitPerRequestPath`
-protection: log flooding
-
-engine: jail system
-
-monitoring: telemetry
-monitoring: sentry
-
-local tools: ddos youself testing
-
+- protection: ip safelist_ips
+- protection: ip blocklist_ips
+- protection: `PhoenixDDoS.IpRateLimit`
+- protection: `PhoenixDDoS.IpRateLimitPerRequestPath`
+- protection: log flooding
+- engine: jail system
+- monitoring: telemetry
+- monitoring: sentry
+- local tools: ddos youself testing
 
 # Usage
 <!-- MDOC -->
