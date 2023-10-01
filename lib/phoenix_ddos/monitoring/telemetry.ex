@@ -34,9 +34,6 @@ defmodule PhoenixDDoS.Telemetry do
 
     * `:system_time` - The system's time when the event occured
     * `:total` - The total amount of ip currently in jail
-
-
-
   """
 
   @doc false

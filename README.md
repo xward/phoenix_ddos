@@ -2,7 +2,6 @@
 
 High performance application-layer DDoS protection for Elixir Phoenix.
 
-
 <p align="center">
   <a href="https://hexdocs.pm/phoenix_ddos/PhoenixDDoS.html">
     <img alt="Hex Docs" src="http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat">
@@ -21,35 +20,31 @@ High performance application-layer DDoS protection for Elixir Phoenix.
 # Table of contents
 
 - [Features](#features)
-- [Setup](#installation)
+- Setup
   - [Installation](#installation)
   - [Configuration](#configuration)
-- [Monitoring]()
-  - [Telemetry events]()
-  - [Sentry]()
-- [Local tooling]()
-  - DDoS youself using siege (mix phoenix_ddos.attack_myself)
+- Monitoring
+  - [Telemetry events](https://hexdocs.pm/phoenix_ddos/PhoenixDDoS.Telemetry.html)
+  - [Sentry](#configuration)
+- Local tooling
+  - [DDoS youself using siege (mix phoenix_ddos.attack_myself)](https://hexdocs.pm/phoenix_ddos/Mix.Tasks.PhoenixDdos.AttackMyself.html)
 - [Benchmark](https://github.com/xward/phoenix_ddos/blob/master/docs/benchmark.md)
 - [Community](#community)
 - [Next in roadmap](#next-in-roadmap)
+- [Later in roadmap](#later-in-roadmap)
 - [Contributing](#contributing)
-
-
-Telemetry events (@see module PhoenixDDoS.Telemetry)
-Notification to sentry
-How it works (you defined rules and list, it can put in jail or just block if it reach any threshold)
 
 # Features
 
-- protection: ip safelist_ips
-- protection: ip blocklist_ips
-- protection: `PhoenixDDoS.IpRateLimit`
-- protection: `PhoenixDDoS.IpRateLimitPerRequestPath`
-- protection: log flooding
-- engine: jail system
-- monitoring: telemetry
-- monitoring: sentry
-- local tools: ddos youself testing
+- **protection: ip safelist_ips** - List of ip that bypass all checks
+- **protection: ip blocklist_ips** - List of ip that are always rejected
+- **protection: `PhoenixDDoS.IpRateLimit`** - rate limit per ip
+- **protection: `PhoenixDDoS.IpRateLimitPerRequestPath`** - rate limit per ip per path
+- **protection: log flooding** - in case of an attack, prevent application log to explode
+- **engine: jail system** - auto-blocklist ips that triggered a protection for a limited amount of time
+- **monitoring: telemetry** - provide events to your aplication from phoenix_ddos decisions
+- **monitoring: sentry** - if you use sentry, you can be notified when an ip has been put in jail
+- **local tools: ddos youself** - because it is fun !
 
 # Usage
 <!-- MDOC -->
@@ -63,7 +58,7 @@ How it works (you defined rules and list, it can put in jail or just block if it
 ```elixir
 def deps do
   [
-    {:phoenix_ddos, "~> 0.7"},
+    {:phoenix_ddos, "~> 1.1"},
     # Highly recommended, this will makes sure we get the correct remote_ip
     {:remote_ip, "~> 1.1"}
   ]
@@ -115,6 +110,7 @@ config :phoenix_ddos,
 
 [protection_examples]: #examples-with-protection-phoenixddosipratelimit
 
+> The configuration is per node you run, rate_limits are not shared (yet), but it gives you the best performance in case of an attack.
 
 ### Examples with protection `PhoenixDDoS.IpRateLimit`
 
@@ -154,7 +150,7 @@ config :phoenix_ddos,
      request_paths: ["/graphql", "/graphiql"], allowed: 20, period: {1, :minute}}]
 ```
 
-is equivalant to:
+is equivalent to:
 ```elixir
   [
    {PhoenixDDoS.IpRateLimitPerRequestPath,
@@ -174,14 +170,19 @@ Slack: join [elixir-lang](https://elixir-lang.slack.com/) and join channel `#pho
 
 ## Next in roadmap
 
-- release a v1
-- ip blocklist/safelist with mask/subnet
-- log central genserver to avoid log spam and create possibility provide aggregated report
-- more performances
-- out of jail system: an attacker ip would go out of jail and will make some damage again before being put in jail, prevent that
+- [perf] generate blocklist/allow pre-compute list module instead of make an `ip in blocklist` test
+- [monitoring/config] observe tooling, to be able to observe what volume is normal traffic and craft a configuration accordingly
+- [feat] ip blocklist/safelist with mask/subnet
+- [feat] log central genserver to avoid log spam and create possibility provide aggregated report
+- [feat] out of jail system: an attacker ip would go out of jail and will make some damage again before being put in jail, prevent that
 
+## Later in roadmap
 
-## contributing
+- [chore] go away from cachex
+- [feat] multi-node
+- [path] make a phoenix_ddos_pro with powerful feature for companies ? The oban model might be a good path to take !
+
+## Contributing
 
 [Create issues](https://github.com/xward/phoenix_ddos/issues) on github for any bug or issue.
 

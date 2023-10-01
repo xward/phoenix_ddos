@@ -57,7 +57,7 @@ defmodule PhoenixDDoS.Engine do
         decisions =
 <%= if request_path_registers != [] do %>
         ip
-        |> Checkers.checkers( String.split(conn.request_path, "/"))
+        |> Checkers.checkers(String.split(conn.request_path, "/"))
 <% else %>
         ip
         |> Checkers.checkers()

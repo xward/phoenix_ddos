@@ -1,7 +1,7 @@
 defmodule PhoenixDDoS.MixProject do
   use Mix.Project
 
-  @version "0.7.22"
+  @version "1.1.0"
   @source_url "https://github.com/xward/phoenix_ddos"
 
   def project do
@@ -29,7 +29,7 @@ defmodule PhoenixDDoS.MixProject do
         }
       ],
       description: """
-      [beta] Application-layer DDOS protection for phoenix.
+      High performance application-layer DDoS protection for Elixir Phoenix
       """,
       # Dialyzer
       dialyzer: [
@@ -47,6 +47,7 @@ defmodule PhoenixDDoS.MixProject do
         source_ref: "v#{@version}",
         source_url: @source_url,
         # logo: "path/to/logo.png",
+        extra_section: "GUIDES",
         extras: ["README.md"],
         groups_for_modules: groups_for_modules()
       ]
