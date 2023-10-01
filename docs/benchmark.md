@@ -14,7 +14,7 @@ Using `mix benchmark`, we try different phoenix_ddos configurations:
 |         1 blocklisted ip  |     44 ms per 10_000 queries |
 |       500 blocklisted ips |     68 ms per 10_000 queries |
 
-Comparaison with previous versions:
+Comparison with previous versions:
 
 | Configuration             | Speed (v0.7.18)              |
 | :------------------------ | :--------------------------- |
@@ -33,6 +33,6 @@ running on 1 thread on a i9-9900k NOC
 
 ## why performance matters ?
 
-One one hand it is sweet to have this plug running fast since a query will go through on every requests. Being simple and predicatble is as much important.
+One one hand it is sweet to have this plug running fast since a query will go through on every request. Being simple and predictable is as much important.
 
-What phoenix_ddos we aim for is being able to be as efficient as possible when an attack actually occures.
+What phoenix_ddos we aim for is being able to be as efficient as possible when an attack actually occurs.

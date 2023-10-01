@@ -27,7 +27,7 @@ High performance application-layer DDoS protection for Elixir Phoenix.
   - [Telemetry events](https://hexdocs.pm/phoenix_ddos/PhoenixDDoS.Telemetry.html)
   - [Sentry](#configuration)
 - Local tooling
-  - [DDoS youself using siege (mix phoenix_ddos.attack_myself)](https://hexdocs.pm/phoenix_ddos/Mix.Tasks.PhoenixDdos.AttackMyself.html)
+  - [DDoS yourself using siege (mix phoenix_ddos.attack_myself)](https://hexdocs.pm/phoenix_ddos/Mix.Tasks.PhoenixDdos.AttackMyself.html)
 - [Benchmark](https://github.com/xward/phoenix_ddos/blob/master/docs/benchmark.md)
 - [Community](#community)
 - [Next in roadmap](#next-in-roadmap)
@@ -42,7 +42,7 @@ High performance application-layer DDoS protection for Elixir Phoenix.
 - **protection: `PhoenixDDoS.IpRateLimitPerRequestPath`** - rate limit per ip per path
 - **protection: log flooding** - in case of an attack, prevent application log to explode
 - **engine: jail system** - auto-blocklist ips that triggered a protection for a limited amount of time
-- **monitoring: telemetry** - provide events to your aplication from phoenix_ddos decisions
+- **monitoring: telemetry** - provide events to your application from phoenix_ddos decisions
 - **monitoring: sentry** - if you use sentry, you can be notified when an ip has been put in jail
 - **local tools: ddos youself** - because it is fun !
 
@@ -138,13 +138,13 @@ config :phoenix_ddos,
      request_paths: ["/admin/:id/dashboard"], allowed: 20, period: {1, :minute}}]
 ```
 
-3. multiple route consumming same quota
+3. multiple route consuming same quota
 ```elixir
     [{PhoenixDDoS.IpRateLimitPerRequestPath,
      request_paths: ["/graphql", "/graphiql"], allowed: 20, shared: true, period: {1, :minute}}]
 ```
 
-4. multiple route consumming independant quota
+4. multiple route consuming independent quota
 ```elixir
     [{PhoenixDDoS.IpRateLimitPerRequestPath,
      request_paths: ["/graphql", "/graphiql"], allowed: 20, period: {1, :minute}}]
@@ -180,7 +180,7 @@ Slack: join [elixir-lang](https://elixir-lang.slack.com/) and join channel `#pho
 
 - [chore] go away from cachex
 - [feat] multi-node
-- [path] make a phoenix_ddos_pro with powerful feature for companies ? The oban model might be a good path to take !
+- [path] make a phoenix_ddos_pro with powerful features for companies ? The oban model might be a good path to take !
 
 ## Contributing
 
