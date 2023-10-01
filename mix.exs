@@ -1,7 +1,7 @@
 defmodule PhoenixDDoS.MixProject do
   use Mix.Project
 
-  @version "1.1.1"
+  @version "1.1.2"
   @source_url "https://github.com/xward/phoenix_ddos"
 
   def project do
@@ -79,7 +79,7 @@ defmodule PhoenixDDoS.MixProject do
   defp deps do
     [
       {:plug, "~> 1.14"},
-      {:cachex, "~> 3.6"},
+      {:cachex, ">= 3.0.0"},
       {:telemetry, ">= 0.0.0"},
       {:dialyxir, "~> 1.0", only: [:test, :dev], runtime: false},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
