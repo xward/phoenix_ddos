@@ -34,4 +34,5 @@ running on 1 thread on a i9-9900k NOC
 ## why performance matters ?
 
 One one hand it is sweet to have this plug running fast since a query will go through on every requests. Being simple and predicatble is as much important.
+
 What phoenix_ddos we aim for is being able to be as efficient as possible when an attack actually occures.
