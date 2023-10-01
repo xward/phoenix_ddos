@@ -80,7 +80,7 @@ defmodule PhoenixDDoS.MixProject do
     [
       {:plug, "~> 1.14"},
       {:cachex, "~> 3.6"},
-      {:telemetry, "~> 1.2"},
+      {:telemetry, ">= 0.0.0"},
       {:dialyxir, "~> 1.0", only: [:test, :dev], runtime: false},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:credo, "~> 1.6", only: [:test, :dev], runtime: false}
