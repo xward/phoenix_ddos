@@ -6,18 +6,19 @@ defmodule PhoenixDDoS.TemplateHelper do
 
   require Logger
 
-  @templates [__DIR__, "/*.eex"]
+  @templates [__DIR__, "*.eex"]
              |> Path.join()
              |> Path.wildcard()
              |> Map.new(fn file_name ->
-               {Path.basename(file_name, ".eex"), File.read!(file_name)}
+               {Path.basename(file_name, ".eex"), EEx.compile_file(file_name)}
              end)
 
   def compile(context, template_name) do
+    {result, _bindings} = @templates[template_name] |> Code.eval_quoted(Keyword.new(context))
+
     Code.put_compiler_option(:ignore_module_conflict, true)
 
-    @templates[template_name]
-    |> EEx.eval_string(Keyword.new(context))
+    result
     # |> inspect_code()
     |> Code.compile_string()
 
