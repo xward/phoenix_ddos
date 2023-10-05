@@ -6,12 +6,18 @@ defmodule PhoenixDDoS.TemplateHelper do
 
   require Logger
 
+  @templates [__DIR__, "/*.eex"]
+             |> Path.join()
+             |> Path.wildcard()
+             |> Map.new(fn file_name ->
+               {Path.basename(file_name, ".eex"), File.read!(file_name)}
+             end)
+
   def compile(context, template_name) do
     Code.put_compiler_option(:ignore_module_conflict, true)
 
-    template_name
-    |> template()
-    |> EEx.eval_file(Keyword.new(context))
+    @templates[template_name]
+    |> EEx.eval_string(Keyword.new(context))
     # |> inspect_code()
     |> Code.compile_string()
 
@@ -21,8 +27,6 @@ defmodule PhoenixDDoS.TemplateHelper do
   def render_list(list) do
     "[#{Enum.map_join(list, ", ", fn e -> inspect(e) end)}]"
   end
-
-  defp template(name), do: [__DIR__, "/#{name}.eex"]
 
   # --------------------------------------------------------------
   # debug generated code
