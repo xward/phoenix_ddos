@@ -4,6 +4,8 @@ defmodule PhoenixDDoS.TemplateHelper do
   # this is where the fun begins !
   # runtime code compilation to prepare high-performance tools
 
+  # we want to have the capability to re-compile engine at any time
+
   require Logger
 
   @templates [__DIR__, "*.eex"]
