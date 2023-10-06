@@ -1,7 +1,7 @@
 defmodule PhoenixDDoS.MixProject do
   use Mix.Project
 
-  @version "1.1.5"
+  @version "1.1.6"
   @source_url "https://github.com/xward/phoenix_ddos"
 
   def project do
@@ -48,17 +48,7 @@ defmodule PhoenixDDoS.MixProject do
         source_url: @source_url,
         # logo: "path/to/logo.png",
         extra_section: "GUIDES",
-        extras: ["README.md"],
-        groups_for_modules: groups_for_modules()
-      ]
-    ]
-  end
-
-  defp groups_for_modules do
-    [
-      Protections: [
-        PhoenixDDoS.IpRateLimit,
-        PhoenixDDoS.IpRateLimitPerRequestPath
+        extras: ["README.md"]
       ]
     ]
   end
