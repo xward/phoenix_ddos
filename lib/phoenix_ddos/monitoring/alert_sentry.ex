@@ -4,7 +4,7 @@ defmodule PhoenixDDoS.Monitoring.AlertSentry do
   def alert_goes_to_jail(ip, extra \\ %{}) do
     attrs = [
       "PhoenixDDoS: new ip enter jail",
-      [extra: %{ip: ip} |> Map.merge(extra)]
+      [extra: %{ip: "#{ip}"} |> Map.merge(extra)]
     ]
 
     # sentry might not being installed, let use apply/2
