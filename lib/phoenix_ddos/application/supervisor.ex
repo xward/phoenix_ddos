@@ -20,7 +20,8 @@ defmodule PhoenixDDoS.Supervisor do
       %{
         id: :phoenix_ddos_jail,
         start: {Cachex, :start_link, [:phoenix_ddos_jail, []]}
-      }
+      },
+      PhoenixDDoS.RateLimitCounter
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
