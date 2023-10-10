@@ -110,7 +110,7 @@ defmodule PhoenixDDoS.Configure do
   # --------------------------------------------------------------
 
   defp fetch_protection_configurations(prot) do
-    Application.get_env(:phoenix_ddos, :protections)
+    Application.get_env(:phoenix_ddos, :protections, [])
     |> Enum.filter(fn {p, _} -> p == prot end)
   end
 
