@@ -41,12 +41,10 @@ defmodule PhoenixDDoS.Engine do
 
     cond do
 <%= if Application.get_env(:phoenix_ddos, :blocklist_ips, []) != [] do %>
-      ip in <%= PhoenixDDoS.TemplateHelper.render_list(Application.get_env(:phoenix_ddos, :blocklist_ips)) %> ->
-        Dredd.reject(conn)
+      blocklist_ips?(ip) -> Dredd.reject(conn)
 <% end %>
 <%= if Application.get_env(:phoenix_ddos, :safelist_ips, []) != [] do %>
-      ip in <%= PhoenixDDoS.TemplateHelper.render_list(Application.get_env(:phoenix_ddos, :safelist_ips)) %> ->
-        conn
+      safelist_ips?(ip) -> conn
 <% end %>
 
       Jail.in_jail?(ip) ->
@@ -64,7 +62,6 @@ defmodule PhoenixDDoS.Engine do
 <% end %>
         # |> IO.inspect()
         |> RateLimit.batch_check()
-        # |> IO.inspect()
 
         cond do
           decisions[:jail] ->
@@ -94,4 +91,14 @@ defmodule PhoenixDDoS.Engine do
   def get_prot_cfg("<%= cfg.id %>"), do: {<%= prot %>, <%= inspect(cfg) %>}
 <% end %>
   def get_prot_cfg(_), do: {nil, nil}
+
+<%= for ip <- Application.get_env(:phoenix_ddos, :blocklist_ips, []) do %>
+  def blocklist_ips?(<%= inspect(ip) %>), do: true
+<% end %>
+  def blocklist_ips?(_), do: false
+
+<%= for ip <- Application.get_env(:phoenix_ddos, :safelist_ips, []) do %>
+  def safelist_ips?(<%= inspect(ip) %>), do: true
+<% end %>
+  def safelist_ips?(_), do: false
 end

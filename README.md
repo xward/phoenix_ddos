@@ -170,8 +170,7 @@ Slack: join [elixir-lang](https://elixir-lang.slack.com/) and join channel `#pho
 
 ## Next in roadmap
 
-- [perf] generate blocklist/allow pre-compute list module instead of make an `ip in blocklist` test
-- [monitoring/config] observe tooling, to be able to observe what volume is normal traffic and craft a configuration accordingly
+- [engin/rate_limit/monitoring] observe tooling, to be able to observe what volume is normal traffic and craft a configuration accordingly
 - [feat] ip blocklist/safelist with mask/subnet
 - [feat] log central genserver to avoid log spam and create possibility provide aggregated report
 - [feat] out of jail system: an attacker ip would go out of jail and will make some damage again before being put in jail, prevent that
