@@ -1,5 +1,10 @@
 # PhoenixDDoS changelog
 
+
+## 1.1.10
+
+- feature: http method filter on PhoenixDDoS.IpRateLimitPerRequestPath
+
 ## 1.1.9
 
 - start to supply changelog file :)

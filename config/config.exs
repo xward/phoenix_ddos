@@ -12,5 +12,8 @@ config :phoenix_ddos,
     {PhoenixDDoS.IpRateLimitPerRequestPath,
      request_paths: ["/admin", "/user/:id/dashboard"], allowed: 3, period: {1, :minute}},
     {PhoenixDDoS.IpRateLimitPerRequestPath,
-     request_paths: ["/create", "/delete"], shared: true, allowed: 3, period: {1, :minute}}
+     request_paths: ["/create", {:delete, "/delete"}],
+     shared: true,
+     allowed: 3,
+     period: {1, :minute}}
   ]

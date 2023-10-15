@@ -92,7 +92,9 @@ config :phoenix_ddos,
     {PhoenixDDoS.IpRateLimit, allowed: 10_000, period: {1, :hour}},
     # ip rate limit on specific request_path
     {PhoenixDDoS.IpRateLimitPerRequestPath,
-     request_paths: ["/graphql"], allowed: 20, period: {1, :minute}}
+     request_paths: ["/graphql"], allowed: 20, period: {1, :minute}},
+    {PhoenixDDoS.IpRateLimitPerRequestPath,
+     request_paths: [{:post, "/login"}], allowed: 5, period: {30, :seconds}}
   ]
 ```
 
@@ -138,13 +140,23 @@ config :phoenix_ddos,
      request_paths: ["/admin/:id/dashboard"], allowed: 20, period: {1, :minute}}]
 ```
 
-3. multiple route consuming same quota
+3. you can also specify method
+```elixir
+    [
+      {PhoenixDDoS.IpRateLimitPerRequestPath,
+     request_paths: [{:post, "/login"}, {:post, "/logout"}], allowed: 5, period: {1, :minute}},
+      {PhoenixDDoS.IpRateLimitPerRequestPath,
+     request_paths: [{:get, "/login"}], allowed: 100, period: {5, :minute}}
+    ]
+```
+
+4. multiple route consuming same quota
 ```elixir
     [{PhoenixDDoS.IpRateLimitPerRequestPath,
      request_paths: ["/graphql", "/graphiql"], allowed: 20, shared: true, period: {1, :minute}}]
 ```
 
-4. multiple route consuming independent quota
+5. multiple route consuming independent quota
 ```elixir
     [{PhoenixDDoS.IpRateLimitPerRequestPath,
      request_paths: ["/graphql", "/graphiql"], allowed: 20, period: {1, :minute}}]

@@ -3,6 +3,7 @@ defmodule PhoenixDDoS.Checkers do
 
 <%= if ip_registers != [] do %>
   def checkers(ip) do
+
     [
       <%= for {prot, cfg} <- ip_registers do %>
         {"<%= cfg.id %>", <%= prot %>.rate_key("<%= cfg.id %>", ip),<%= PhoenixDDoS.Time.period_to_msec(cfg.period) %>, <%=  cfg.allowed %>, :<%=  cfg.sentence %>},
@@ -51,11 +52,10 @@ defmodule PhoenixDDoS.Engine do
         Dredd.reject(conn)
 
       true ->
-
         decisions =
 <%= if request_path_registers != [] do %>
         ip
-        |> Checkers.checkers(String.split(conn.request_path, "/"))
+        |> Checkers.checkers(String.split(conn.method <> "/" <> conn.request_path, "/"))
 <% else %>
         ip
         |> Checkers.checkers()
@@ -77,7 +77,6 @@ defmodule PhoenixDDoS.Engine do
 
           decisions[:block] ->
             <% # for now we don't log block since it could cause log overload %>
-
             Dredd.reject(conn)
 
           true ->

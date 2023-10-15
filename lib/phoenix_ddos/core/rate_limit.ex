@@ -14,6 +14,7 @@ defmodule PhoenixDDoS.RateLimit do
     checkers
     |> Enum.reduce(%{}, fn {id, key, period, allowed, decision_if_above}, acc ->
       {:ok, n} = Cachex.incr(@store, key)
+
       # new ? set ttl
       if n == 1, do: Cachex.expire(@store, key, period)
 

@@ -1,7 +1,7 @@
 defmodule PhoenixDDoS.MixProject do
   use Mix.Project
 
-  @version "1.1.9"
+  @version "1.1.10"
   @source_url "https://github.com/xward/phoenix_ddos"
 
   def project do
@@ -82,6 +82,7 @@ defmodule PhoenixDDoS.MixProject do
       benchmark: "run benchmark/benchmark.exs",
       credo: "credo --strict",
       ci: [
+        "clean",
         "format --check-formatted",
         "deps.unlock --check-unused",
         "credo --strict",

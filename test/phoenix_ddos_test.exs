@@ -86,7 +86,7 @@ defmodule PhoenixDDoSTest do
       run_ddos(conn(%{remote_ip: @another_ip}), assert_fail_after_request: 10)
     end
 
-    test "IpRateLimit thottle" do
+    test "IpRateLimit throttle" do
       [
         {PhoenixDDoS.IpRateLimit, allowed: 10, period: {2, :second}, jail_time: nil}
       ]
