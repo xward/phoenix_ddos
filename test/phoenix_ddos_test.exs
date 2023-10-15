@@ -118,7 +118,7 @@ defmodule PhoenixDDoSTest do
     test "IpRateLimitPerRequestPath" do
       [
         {PhoenixDDoS.IpRateLimitPerRequestPath,
-         request_paths: ["/admin/:id/dashboard", "/admin"],
+         request_paths: ["/admin/:id/dashboard", {:post, "/admin"}],
          allowed: 3,
          period: {1, :minute},
          jail_time: nil}
@@ -127,7 +127,9 @@ defmodule PhoenixDDoSTest do
 
       run_ddos(conn(%{request_path: "/admin/23/dashboard"}), assert_fail_after_request: 3)
 
-      run_ddos(conn(%{request_path: "/admin"}), assert_fail_after_request: 3)
+      run_ddos(conn(%{request_path: "/admin", method: "POST"}), assert_fail_after_request: 3)
+
+      run_ddos(conn(%{request_path: "/admin"}), :never_fail)
 
       run_ddos(conn(%{request_path: "/user"}), :never_fail)
     end
