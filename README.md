@@ -34,6 +34,15 @@ High performance application-layer DDoS protection for Elixir Phoenix.
 - [Later in roadmap](#later-in-roadmap)
 - [Contributing](#contributing)
 
+---
+
+> **Note**
+> _You are currently on unreleased branch. Latest stable release documentation is [here][hexdoc]_
+
+[hexdoc]: https://hexdocs.pm/phoenix_ddos/PhoenixDDoS.html
+
+---
+
 # Features
 
 - **protection: ip safelist_ips** - List of ip that bypass all checks
