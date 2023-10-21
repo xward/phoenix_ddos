@@ -191,14 +191,14 @@ Slack: join [elixir-lang](https://elixir-lang.slack.com/) and join channel `#pho
 
 ## Next in roadmap
 
-- [engin/rate_limit/monitoring] observe tooling, to be able to observe what volume is normal traffic and craft a configuration accordingly
+- [monitoring] observe tooling, to be able to observe what volume is normal traffic and craft a configuration accordingly
 - [feat] ip blocklist/safelist with mask/subnet
 - [feat] log central genserver to avoid log spam and create possibility provide aggregated report
 - [feat] out of jail system: an attacker ip would go out of jail and will make some damage again before being put in jail, prevent that
 
 ## Later in roadmap
 
-- [chore] go away from cachex
+- [chore|perf] bluck rate limiting
 - [feat] multi-node
 - [path] make a phoenix_ddos_pro with powerful features for companies ? The oban model might be a good path to take !
 
