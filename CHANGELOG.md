@@ -1,5 +1,9 @@
 # PhoenixDDoS changelog
 
+## 1.1.11
+
+- chore: improve bulk cachex incr performance
+
 
 ## 1.1.10
 
