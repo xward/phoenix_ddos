@@ -30,6 +30,9 @@ High performance application-layer DDoS protection for Elixir Phoenix.
   - [DDoS yourself using siege (mix phoenix_ddos.attack_myself)](https://hexdocs.pm/phoenix_ddos/Mix.Tasks.PhoenixDdos.AttackMyself.html)
 - [Benchmark](https://github.com/xward/phoenix_ddos/blob/master/docs/benchmark.md)
 - [Community](#community)
+- [FAQ](#faq)
+  - [Why would I need this compared to a system like cloudflare or a reverse proxy with a fail2ban ?](#why-would-i-need-this-compared-to-a-system-like-cloudflare-or-a-reverse-proxy-with-a-fail2ban-)
+  - [What is a multi-layer ddos protection and why this is important ?](#what-is-a-multi-layer-ddos-protection-and-why-this-is-important-)
 - [Next in roadmap](#next-in-roadmap)
 - [Later in roadmap](#later-in-roadmap)
 - [Contributing](#contributing)
@@ -188,6 +191,31 @@ is equivalent to:
 
 Slack: join [elixir-lang](https://elixir-lang.slack.com/) and join channel `#phoenix_ddos`
 
+## FAQ
+
+### Why would I need this compared to a system like cloudflare or a reverse proxy with a fail2ban ?
+
+The best ddos protection is like any protection: you have to have multiple layers of protection, each layer having its own advantage or disadvantage. In that matter, to maximize protection you should use one system per layer.
+
+Also we have to keep in mind that a lot of projects don't have the capability (running in a PaaS like heroku for instance) or the will to have all these systems in place. Since `phoenix_ddos` is a plug-and-play (pun intended) library with minimum configuration, it is a great value for a minimum of effort.
+
+### What is a multi-layer ddos protection and why this is important ?
+
+`phoenix_ddos` is the application layer, running in the application itself. It advantage is that is knows the inside of the application and its limits and can act on the details, where a cloudflare or a ngnix fail2ban would manage most of the load, but the traffic that still access your application may still kill it, this is then the responsability of `phoenix_ddos`.
+
+##### Example of a phoenix application cluster: e.g. 10 pods running each the same phoenix application:
+
+Other layers will protect the entire cluster and `phoenix_ddos` will protect each phoenix application individually.
+
+Since one phoenix application have its own limits, it is best to have a throttle at this layer.
+
+If the cluster scale up or down (switching to 3 pods or 30 pods), other layers will never adapt their throttle values, but `phoenix_ddos` will scale its protection gracefully.
+
+##### Comparaison with an home electrical installation:
+
+In home installation, you have 2 layers of protection doing the exact same thing:
+- one differential switch protecting the house globally, with a **small sensitivity**, this will protect the house from burning is a bad short circuit happen
+- several differential switches in the electric switchboard, with **high sensitivity**, this will protect people from being badly injured in case of a shock. We can note that those switches are `application specialized` because they are chosen according to the load they have to protect, something the other layer can't manage since it has no idea of the house usage in detail.
 
 ## Next in roadmap
 
@@ -198,7 +226,6 @@ Slack: join [elixir-lang](https://elixir-lang.slack.com/) and join channel `#pho
 
 ## Later in roadmap
 
-- [chore|perf] bluck rate limiting
 - [feat] multi-node
 - [path] make a phoenix_ddos_pro with powerful features for companies ? The oban model might be a good path to take !
 
