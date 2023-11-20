@@ -33,6 +33,7 @@ defmodule PhoenixDDoS.Engine do
   alias PhoenixDDoS.Dredd
   alias PhoenixDDoS.Jail
   alias PhoenixDDoS.RateLimit
+  alias PhoenixDDoS.Telemetry
 
   require Logger
 
@@ -42,10 +43,14 @@ defmodule PhoenixDDoS.Engine do
 
     cond do
 <%= if Application.get_env(:phoenix_ddos, :blocklist_ips, []) != [] do %>
-      blocklist_ips?(ip) -> Dredd.reject(conn)
+      blocklist_ips?(ip) ->
+        Telemetry.push([:request, :new], %{}, %{ip: ip, method: conn.method, path: conn.request_path, decision: :block})
+        Dredd.reject(conn)
 <% end %>
 <%= if Application.get_env(:phoenix_ddos, :safelist_ips, []) != [] do %>
-      safelist_ips?(ip) -> conn
+      safelist_ips?(ip) ->
+        Telemetry.push([:request, :new], %{}, %{ip: ip, method: conn.method, path: conn.request_path, decision: :pass})
+        conn
 <% end %>
 
       Jail.in_jail?(ip) ->
@@ -73,13 +78,19 @@ defmodule PhoenixDDoS.Engine do
 
             Jail.send(ip, prot)
 
+            Telemetry.push([:request, :new], %{}, %{ip: ip, method: conn.method, path: conn.request_path, decision: :jail})
+
             Dredd.reject(conn)
 
           decisions[:block] ->
+            Telemetry.push([:request, :new], %{}, %{ip: ip, method: conn.method, path: conn.request_path, decision: :block})
+
             <% # for now we don't log block since it could cause log overload %>
             Dredd.reject(conn)
 
           true ->
+            Telemetry.push([:request, :new], %{}, %{ip: ip, method: conn.method, path: conn.request_path, decision: :pass})
+
             conn
         end
       end

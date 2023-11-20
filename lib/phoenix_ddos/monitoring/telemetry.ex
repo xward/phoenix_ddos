@@ -34,6 +34,23 @@ defmodule PhoenixDDoS.Telemetry do
 
     * `:system_time` - The system's time when the event occured
     * `:total` - The total amount of ip currently in jail
+
+
+  ## Request Events
+
+  * `[:phoenix_ddos, :request, :new]` - request being processed by phoenix ddos engine
+
+    Measurements:
+
+    * `:system_time` - The system's time when the event occured
+
+    Metas:
+
+    * `:ip` - ip source fo request
+    * `:method` - http method
+    * `:path` - path
+    * `:decision` - either `:pass` `:block` or `:jail`
+
   """
 
   @doc false

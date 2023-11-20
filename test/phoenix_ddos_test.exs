@@ -25,9 +25,9 @@ defmodule PhoenixDDoSTest do
       flush_protections()
 
       # https://elixirforum.com/t/testing-and-telemetry-events-how-to-test-if-they-are-sent/28273
-      :telemetry.attach(
+      :telemetry.attach_many(
         "unit_test_telemetry",
-        [:phoenix_ddos, :jail, :new],
+        [[:phoenix_ddos, :jail, :new], [:phoenix_ddos, :request, :new]],
         &TelemetryUtils.handle_telemetry_event/4,
         nil
       )
@@ -148,6 +148,46 @@ defmodule PhoenixDDoSTest do
       run_ddos(conn(%{request_path: "/admin"}), assert_fail_after_request: 3)
 
       run_ddos(conn(%{request_path: "/user"}), :always_fail)
+    end
+
+    # --------------------------------------------------------------
+    # telemetry events
+    # --------------------------------------------------------------
+
+    test "Telemetry [:phoenix_ddos, :request, :new] :pass" do
+      conn() |> call()
+      assert_receive {:telemetry_event, [:phoenix_ddos, :request, :new], %{}, %{decision: :pass}}
+    end
+
+    test "Telemetry [:phoenix_ddos, :request, :new] :block on blocklist_ips" do
+      Application.put_env(:phoenix_ddos, :blocklist_ips, [@an_ip |> :inet.ntoa()])
+      PhoenixDDoS.Configure.init()
+
+      conn() |> call()
+
+      assert_receive {:telemetry_event, [:phoenix_ddos, :request, :new], %{}, %{decision: :block}}
+    end
+
+    test "Telemetry [:phoenix_ddos, :request, :new] :jail" do
+      [
+        {PhoenixDDoS.IpRateLimit, allowed: 0, period: {2, :second}}
+      ]
+      |> put_protections()
+
+      conn() |> call()
+
+      assert_receive {:telemetry_event, [:phoenix_ddos, :request, :new], %{}, %{decision: :jail}}
+    end
+
+    test "Telemetry [:phoenix_ddos, :request, :new] :block" do
+      [
+        {PhoenixDDoS.IpRateLimit, allowed: 0, period: {2, :second}, jail_time: nil}
+      ]
+      |> put_protections()
+
+      conn() |> call()
+
+      assert_receive {:telemetry_event, [:phoenix_ddos, :request, :new], %{}, %{decision: :block}}
     end
   end
 
