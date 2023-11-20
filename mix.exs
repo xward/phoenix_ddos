@@ -91,7 +91,7 @@ defmodule PhoenixDDoS.MixProject do
       ],
       release: [
         "cmd git tag v#{@version}",
-        "cmd git push",
+        "cmd git push origin master",
         "cmd git push --tags",
         "hex.publish --yes",
         "hex.build",
