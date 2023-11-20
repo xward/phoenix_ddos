@@ -214,7 +214,7 @@ If the cluster scale up or down (switching to 3 pods or 30 pods), other layers w
 ##### Comparaison with an home electrical installation:
 
 In home installation, you have 2 layers of protection doing the exact same thing:
-- one differential switch protecting the house globally, with a **small sensitivity**, this will protect the house from burning is a bad short circuit happen
+- one differential switch protecting the house globally, with a **small sensitivity**, this will protect the house from burning if a bad short circuit happen
 - several differential switches in the electric switchboard, with **high sensitivity**, this will protect people from being badly injured in case of a shock. We can note that those switches are `application specialized` because they are chosen according to the load they have to protect, something the other layer can't manage since it has no idea of the house usage in detail.
 
 ## Next in roadmap
