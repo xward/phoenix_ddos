@@ -16,8 +16,7 @@ defmodule PhoenixDDoS.MixProject do
       preferred_cli_env: [
         benchmark: :test,
         credo: :test,
-        ci: :test,
-        release: :prod
+        ci: :test
       ],
       # hex
       package: [
@@ -84,6 +83,7 @@ defmodule PhoenixDDoS.MixProject do
       benchmark: "run benchmark/benchmark.exs",
       credo: "credo --strict",
       ci: [
+        # clean previous compiled .eex files
         "clean",
         "format --check-formatted",
         "deps.unlock --check-unused",
@@ -96,8 +96,6 @@ defmodule PhoenixDDoS.MixProject do
         "cmd git push origin master",
         "cmd git push --tags",
         "hex.publish --yes",
-        # "hex.build",
-        "cmd rm phoenix_ddos-*.tar",
         "cmd rm -rf doc"
       ]
     ]
