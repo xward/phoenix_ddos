@@ -14,6 +14,9 @@ defmodule PhoenixDDoS.Configure do
   ]
 
   def configure do
+    # validate some configuration provided by user
+    validate!()
+
     # create _prot
     Application.put_env(
       :phoenix_ddos,
@@ -103,6 +106,24 @@ defmodule PhoenixDDoS.Configure do
         ip when is_binary(ip) -> String.to_charlist(ip)
       end)
     )
+  end
+
+  # --------------------------------------------------------------
+  # Validation
+  # --------------------------------------------------------------
+
+  defp validate! do
+    unless Application.get_env(:phoenix_ddos, :router) do
+      raise "PhoenixDDoS: missing :router configuration"
+    end
+
+    unless Application.get_env(:phoenix_ddos, :router) |> module_has_function?(:__routes__) do
+      raise "PhoenixDDoS: :router doesn't looks like a Phoenix.Router"
+    end
+  end
+
+  defp module_has_function?(module, func) do
+    Keyword.has_key?(module.__info__(:functions), func)
   end
 
   # --------------------------------------------------------------

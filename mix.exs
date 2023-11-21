@@ -1,7 +1,7 @@
 defmodule PhoenixDDoS.MixProject do
   use Mix.Project
 
-  @version "1.1.11"
+  @version "1.1.12"
   @source_url "https://github.com/xward/phoenix_ddos"
 
   def project do
@@ -16,7 +16,8 @@ defmodule PhoenixDDoS.MixProject do
       preferred_cli_env: [
         benchmark: :test,
         credo: :test,
-        ci: :test
+        ci: :test,
+        release: :prod
       ],
       # hex
       package: [
@@ -62,7 +63,7 @@ defmodule PhoenixDDoS.MixProject do
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support", "benchmark"]
-  defp elixirc_paths(:dev), do: ["lib"]
+  defp elixirc_paths(:dev), do: ["lib", "test/support/router.ex"]
   defp elixirc_paths(_env), do: ["lib"]
 
   # Run "mix help deps" to learn about dependencies.
@@ -71,6 +72,7 @@ defmodule PhoenixDDoS.MixProject do
       {:plug, "~> 1.14"},
       {:cachex, ">= 3.0.0"},
       {:telemetry, ">= 0.0.0"},
+      {:phoenix, "~> 1.7", only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.0", only: [:test, :dev], runtime: false},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:credo, "~> 1.6", only: [:test, :dev], runtime: false}
@@ -94,7 +96,7 @@ defmodule PhoenixDDoS.MixProject do
         "cmd git push origin master",
         "cmd git push --tags",
         "hex.publish --yes",
-        "hex.build",
+        # "hex.build",
         "cmd rm phoenix_ddos-*.tar",
         "cmd rm -rf doc"
       ]

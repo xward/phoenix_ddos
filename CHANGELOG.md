@@ -1,9 +1,13 @@
 # PhoenixDDoS changelog
 
+## 1.1.12
+
+- feature: new telemetry event [:phoenix_ddos, :request, :new]
+- minor readme fixes
+
 ## 1.1.11
 
 - chore: improve bulk cachex incr performance
-
 
 ## 1.1.10
 
