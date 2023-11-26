@@ -1,5 +1,9 @@
 # PhoenixDDoS changelog
 
+## 1.1.14
+
+- feature: observe tooling, to be able to observe what volume is normal traffic and craft a configuration accordingly
+
 ## 1.1.13
 
 - remove router requirement, this was not a good idea !

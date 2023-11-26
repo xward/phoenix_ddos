@@ -114,6 +114,7 @@ config :phoenix_ddos,
 | Type | Option                    | Default       | Description                                                                                     |
 | :--- | :------------------------ | :------------ | :---------------------------------------------------------------------------------------------- |
 | bool | `enabled`                 | true          | set false to disable                                                                            |
+| bool | `observer`                | false         | print periodic log with stats to get an idea of traffic to configure protections accordingly    |
 | int  | `jail_time`               | {15, minutes} | time an ip is fully blocked if caught by a protection. set nil to disable thus blocking instead |
 | bool | `raise_on_reject`         | false         | raise when we reject a connexion instead of returning an http code error                        |
 | int  | `http_code_on_reject`     | 429           | http code returned when we reject a connexion                                                   |

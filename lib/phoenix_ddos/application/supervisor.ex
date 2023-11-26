@@ -12,16 +12,22 @@ defmodule PhoenixDDoS.Supervisor do
   end
 
   def init(_config) do
-    children = [
-      %{
-        id: :phoenix_ddos_store,
-        start: {Cachex, :start_link, [:phoenix_ddos_store, []]}
-      },
-      %{
-        id: :phoenix_ddos_jail,
-        start: {Cachex, :start_link, [:phoenix_ddos_jail, []]}
-      }
-    ]
+    children =
+      [
+        %{
+          id: :phoenix_ddos_store,
+          start: {Cachex, :start_link, [:phoenix_ddos_store, []]}
+        },
+        %{
+          id: :phoenix_ddos_jail,
+          start: {Cachex, :start_link, [:phoenix_ddos_jail, []]}
+        },
+        %{
+          id: :phoenix_ddos_observer,
+          start: {Cachex, :start_link, [:phoenix_ddos_observer, []]}
+        }
+      ] ++
+        ((Application.get_env(:phoenix_ddos, :observer, false) && [PhoenixDDoS.Observer]) || [])
 
     Supervisor.init(children, strategy: :one_for_one)
   end
