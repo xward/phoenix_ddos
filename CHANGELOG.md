@@ -1,5 +1,9 @@
 # PhoenixDDoS changelog
 
+## 1.1.13
+
+- remove router requirement, this was not a good idea !
+
 ## 1.1.12
 
 - feature: new telemetry event [:phoenix_ddos, :request, :new]

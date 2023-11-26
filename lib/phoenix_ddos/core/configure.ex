@@ -17,6 +17,12 @@ defmodule PhoenixDDoS.Configure do
     # validate some configuration provided by user
     validate!()
 
+    Application.put_env(
+      :phoenix_ddos,
+      :routers,
+      phoenix_routers()
+    )
+
     # create _prot
     Application.put_env(
       :phoenix_ddos,
@@ -109,21 +115,45 @@ defmodule PhoenixDDoS.Configure do
   end
 
   # --------------------------------------------------------------
+  # Routers introspection
+  # --------------------------------------------------------------
+
+  defp phoenix_routers do
+    Application.loaded_applications()
+    |> Enum.map(fn {app, _desc, _v} -> app end)
+    |> Enum.map(fn app ->
+      {:ok, modules} = :application.get_key(app, :modules)
+      modules
+    end)
+    |> List.flatten()
+    |> Enum.filter(&phoenix_router?/1)
+  end
+
+  defp phoenix_router?(module) when is_atom(module) do
+    # one could use Kernel.function_exported?(module, :__routes__, 0)
+    # but exported functions might not be here yet (had issue when having 2 routers)
+    module
+    |> module_functions()
+    |> Enum.find(fn
+      {:__routes__, 0} -> true
+      {_funct, _arity} -> false
+    end)
+  end
+
+  defp module_functions(module) do
+    if Kernel.function_exported?(module, :__info__, 1) do
+      module.__info__(:functions)
+    else
+      []
+    end
+  end
+
+  # --------------------------------------------------------------
   # Validation
   # --------------------------------------------------------------
 
   defp validate! do
-    unless Application.get_env(:phoenix_ddos, :router) do
-      raise "PhoenixDDoS: missing :router configuration"
-    end
-
-    unless Application.get_env(:phoenix_ddos, :router) |> module_has_function?(:__routes__) do
-      raise "PhoenixDDoS: :router doesn't looks like a Phoenix.Router"
-    end
-  end
-
-  defp module_has_function?(module, func) do
-    Keyword.has_key?(module.__info__(:functions), func)
+    :ok
   end
 
   # --------------------------------------------------------------

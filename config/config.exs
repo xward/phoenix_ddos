@@ -3,7 +3,6 @@
 import Config
 
 config :phoenix_ddos,
-  router: PhoenixDDoS.Router,
   raise_on_reject: false,
   http_code_on_reject: 421,
   protections: [

@@ -96,7 +96,6 @@ end
 
 ```elixir
 config :phoenix_ddos,
-  router: MyAppWeb.Router,
   safelist_ips: ["1.2.3.4", "5.6.7.0"],
   blocklist_ips: ["11.12.13.0"],
   observer: true,
@@ -114,7 +113,6 @@ config :phoenix_ddos,
 
 | Type | Option                    | Default       | Description                                                                                     |
 | :--- | :------------------------ | :------------ | :---------------------------------------------------------------------------------------------- |
-| atom | `router`                  | <mandatory>   | your phoenix web router                                                                         |
 | bool | `enabled`                 | true          | set false to disable                                                                            |
 | int  | `jail_time`               | {15, minutes} | time an ip is fully blocked if caught by a protection. set nil to disable thus blocking instead |
 | bool | `raise_on_reject`         | false         | raise when we reject a connexion instead of returning an http code error                        |
