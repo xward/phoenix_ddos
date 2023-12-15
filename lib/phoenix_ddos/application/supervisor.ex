@@ -20,6 +20,10 @@ defmodule PhoenixDDoS.Supervisor do
       %{
         id: :phoenix_ddos_jail,
         start: {Cachex, :start_link, [:phoenix_ddos_jail, []]}
+      },
+      %{
+        id: :phoenix_ddos_suspicious_ips,
+        start: {Cachex, :start_link, [:phoenix_ddos_suspicious_ips, []]}
       }
     ]
 
