@@ -1,5 +1,9 @@
 # PhoenixDDoS changelog
 
+## 1.1.14
+
+- small refactors on Jail module, documentation and accessors (list banned ip functions, ...)
+
 ## 1.1.13
 
 - remove router requirement, this was not a good idea !
