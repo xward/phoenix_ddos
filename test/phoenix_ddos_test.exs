@@ -38,7 +38,7 @@ defmodule PhoenixDDoSTest do
     test "safelist_ips" do
       # let mix ip format
       Application.put_env(:phoenix_ddos, :safelist_ips, [
-        @an_ip |> :inet.ntoa() |> List.to_string(),
+        @an_ip |> :inet.ntoa() |> to_string(),
         @another_ip |> :inet.ntoa()
       ])
 
@@ -154,8 +154,22 @@ defmodule PhoenixDDoSTest do
     # telemetry events
     # --------------------------------------------------------------
 
+    test "Telemetry [:phoenix_ddos, :request, :new] context data" do
+      conn = conn(%{request_path: "/admin/521/dashboard"})
+      conn |> call()
+
+      assert_receive {:telemetry_event, [:phoenix_ddos, :request, :new], %{},
+                      %{
+                        ip: "1.2.3.4",
+                        method: "GET",
+                        path: "/admin/521/dashboard",
+                        route: "/admin/:id/dashboard"
+                      }}
+    end
+
     test "Telemetry [:phoenix_ddos, :request, :new] :pass" do
       conn() |> call()
+
       assert_receive {:telemetry_event, [:phoenix_ddos, :request, :new], %{}, %{decision: :pass}}
     end
 

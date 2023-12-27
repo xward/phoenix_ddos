@@ -48,10 +48,13 @@ defmodule PhoenixDDoS.Telemetry do
 
     * `:ip` - ip source fo request
     * `:method` - http method
-    * `:path` - path
+    * `:path` - path (ex: /users/12)
+    * `:route` - phoenix route (ex: /users/:id)
     * `:decision` - either `:pass` `:block` or `:jail`
 
   """
+
+  alias PhoenixDDoS.RequestContext
 
   @doc false
   def push(event, mesurements, metas) do
@@ -60,5 +63,9 @@ defmodule PhoenixDDoS.Telemetry do
       mesurements |> Map.merge(%{system_time: DateTime.utc_now()}),
       metas
     )
+  end
+
+  def push_request_new(decision) do
+    push([:request, :new], %{}, Map.put(RequestContext.pull(:pretty) , :decision, decision))
   end
 end

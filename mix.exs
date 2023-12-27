@@ -1,7 +1,7 @@
 defmodule PhoenixDDoS.MixProject do
   use Mix.Project
 
-  @version "1.1.14"
+  @version "1.1.15"
   @source_url "https://github.com/xward/phoenix_ddos"
 
   def project do

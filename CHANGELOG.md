@@ -1,12 +1,16 @@
 # PhoenixDDoS changelog
 
+## 1.1.15
+
+- feature: adding request context on sentry and telemetry events
+
 ## 1.1.14
 
-- small refactors on Jail module, documentation and accessors (list banned ip functions, ...)
+- feature: small refactors on Jail module, documentation and accessors (list banned ip functions, ...)
 
 ## 1.1.13
 
-- remove router requirement, this was not a good idea !
+- chore: remove router requirement, this was not a good idea !
 
 ## 1.1.12
 

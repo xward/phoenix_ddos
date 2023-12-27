@@ -4,6 +4,11 @@ defmodule AController do
   use Phoenix.Controller
 end
 
+defmodule PhoenixDDoS.EmptyRouter do
+  @moduledoc false
+  use Phoenix.Router
+end
+
 defmodule PhoenixDDoS.Router do
   @moduledoc false
   use Phoenix.Router

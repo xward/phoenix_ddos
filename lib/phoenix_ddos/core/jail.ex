@@ -16,19 +16,13 @@ defmodule PhoenixDDoS.Jail do
     false
   """
 
-  alias PhoenixDDoS.Monitoring.AlertSentry
   alias PhoenixDDoS.Telemetry
   alias PhoenixDDoS.Time
-
-  @sentry Application.compile_env(:phoenix_ddos, :on_jail_alert_to_sentry)
 
   def send(ip, {_module, cfg} = prot) do
     {:ok, _} = Cachex.put(:phoenix_ddos_jail, ip, true, ttl: Time.period_to_msec(cfg.jail_time))
     {:ok, _} = Cachex.put(:phoenix_ddos_suspicious_ips, ip, true, ttl: :timer.hours(6))
-
     Telemetry.push([:jail, :new], %{}, %{ip: ip, protection: prot})
-
-    if @sentry, do: AlertSentry.alert_goes_to_jail(ip, %{protection: inspect(prot)})
 
     {:ok, total} = Cachex.size(:phoenix_ddos_jail)
     Telemetry.push([:jail, :count], %{total: total}, %{})

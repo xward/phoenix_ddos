@@ -33,23 +33,28 @@ defmodule PhoenixDDoS.Engine do
   alias PhoenixDDoS.Dredd
   alias PhoenixDDoS.Jail
   alias PhoenixDDoS.RateLimit
+  alias PhoenixDDoS.RequestContext
   alias PhoenixDDoS.Telemetry
 
   require Logger
 
   <% # returns {decision, prot_that_decide_it} %>
   def control(conn) do
-    ip = conn.remote_ip |> :inet.ntoa()
+    PhoenixDDoS.RequestContext.feed(conn)
+
+    ip = RequestContext.get(:ip)
 
     cond do
 <%= if Application.get_env(:phoenix_ddos, :blocklist_ips, []) != [] do %>
       blocklist_ips?(ip) ->
-        Telemetry.push([:request, :new], %{}, %{ip: ip, method: conn.method, path: conn.request_path, decision: :block})
+        Telemetry.push_request_new(:block)
+
         Dredd.reject(conn)
 <% end %>
 <%= if Application.get_env(:phoenix_ddos, :safelist_ips, []) != [] do %>
       safelist_ips?(ip) ->
-        Telemetry.push([:request, :new], %{}, %{ip: ip, method: conn.method, path: conn.request_path, decision: :pass})
+        Telemetry.push_request_new(:pass)
+
         conn
 <% end %>
 
@@ -78,18 +83,22 @@ defmodule PhoenixDDoS.Engine do
 
             Jail.send(ip, prot)
 
-            Telemetry.push([:request, :new], %{}, %{ip: ip, method: conn.method, path: conn.request_path, decision: :jail})
+<%= if Application.get_env(:phoenix_ddos, :on_jail_alert_to_sentry) do %>
+            AlertSentry.alert_goes_to_jail(prot)
+<% end %>
+
+            Telemetry.push_request_new(:jail)
 
             Dredd.reject(conn)
 
           decisions[:block] ->
-            Telemetry.push([:request, :new], %{}, %{ip: ip, method: conn.method, path: conn.request_path, decision: :block})
+            Telemetry.push_request_new(:block)
 
             <% # for now we don't log block since it could cause log overload %>
             Dredd.reject(conn)
 
           true ->
-            Telemetry.push([:request, :new], %{}, %{ip: ip, method: conn.method, path: conn.request_path, decision: :pass})
+            Telemetry.push_request_new(:pass)
 
             conn
         end
