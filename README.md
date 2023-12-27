@@ -98,7 +98,6 @@ end
 config :phoenix_ddos,
   safelist_ips: ["1.2.3.4", "5.6.7.0"],
   blocklist_ips: ["11.12.13.0"],
-  observer: true,
   protections: [
     # ip rate limit
     {PhoenixDDoS.IpRateLimit, allowed: 500, period: {2, :minutes}},
