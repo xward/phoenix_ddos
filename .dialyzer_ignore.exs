@@ -14,5 +14,7 @@
   {"test/support/router.ex", "Function Phoenix.VerifiedRoutes.static_path/2 does not exist."},
   {"test/support/router.ex", "Function Phoenix.VerifiedRoutes.static_url/2 does not exist."},
   {"test/support/router.ex", "Function Phoenix.VerifiedRoutes.unverified_path/3 does not exist."},
-  {"test/support/router.ex", "Function Phoenix.VerifiedRoutes.unverified_url/2 does not exist."}
+  {"test/support/router.ex", "Function Phoenix.VerifiedRoutes.unverified_url/2 does not exist."},
+  {"lib/phoenix_ddos/core/request_context.ex", :unknown_function},
+  {"deps/phoenix/lib/phoenix/router.ex", :pattern_match}
 ]

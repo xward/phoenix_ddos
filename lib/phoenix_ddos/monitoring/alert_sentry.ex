@@ -3,6 +3,7 @@ defmodule PhoenixDDoS.Monitoring.AlertSentry do
 
   alias PhoenixDDoS.RequestContext
 
+  @doc false
   def alert_goes_to_jail(prot) do
     attrs = [
       "PhoenixDDoS: new ip enter jail",

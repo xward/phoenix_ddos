@@ -154,7 +154,7 @@ defmodule PhoenixDDoSTest do
     # telemetry events
     # --------------------------------------------------------------
 
-    test "Telemetry [:phoenix_ddos, :request, :new] context data" do
+    test "Telemetry context data" do
       conn = conn(%{request_path: "/admin/521/dashboard"})
       conn |> call()
 
@@ -164,6 +164,19 @@ defmodule PhoenixDDoSTest do
                         method: "GET",
                         path: "/admin/521/dashboard",
                         route: "/admin/:id/dashboard"
+                      }}
+    end
+
+    test "Telemetry context no route found" do
+      conn = conn(%{request_path: "/notfound"})
+      conn |> call()
+
+      assert_receive {:telemetry_event, [:phoenix_ddos, :request, :new], %{},
+                      %{
+                        ip: "1.2.3.4",
+                        method: "GET",
+                        path: "/notfound",
+                        route: nil
                       }}
     end
 

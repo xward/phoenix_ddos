@@ -20,7 +20,7 @@ defmodule PhoenixDDoS.RequestContext do
 
   defp phoenix_route(conn) do
     Application.get_env(:phoenix_ddos, :routers)
-    |> Enum.find_value(conn.request_path, fn router ->
+    |> Enum.find_value(fn router ->
       case Phoenix.Router.route_info(router, conn.method, conn.request_path, nil) do
         :error -> false
         %{route: route} -> route

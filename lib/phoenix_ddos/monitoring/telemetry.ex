@@ -66,6 +66,6 @@ defmodule PhoenixDDoS.Telemetry do
   end
 
   def push_request_new(decision) do
-    push([:request, :new], %{}, Map.put(RequestContext.pull(:pretty) , :decision, decision))
+    push([:request, :new], %{}, Map.put(RequestContext.pull(:pretty), :decision, decision))
   end
 end
