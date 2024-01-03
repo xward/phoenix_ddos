@@ -2,6 +2,10 @@
 
 ## 1.1.15
 
+- fix: minor fixes
+
+## 1.1.15
+
 - feature: adding request context on sentry and telemetry events
 
 ## 1.1.14
