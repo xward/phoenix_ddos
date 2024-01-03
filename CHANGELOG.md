@@ -1,6 +1,10 @@
 # PhoenixDDoS changelog
 
-## 1.1.15
+## 1.1.17
+
+- fix: more warning fixes
+
+## 1.1.16
 
 - fix: minor fixes
 
