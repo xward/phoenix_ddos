@@ -32,6 +32,7 @@ defmodule PhoenixDDoS.Engine do
   alias PhoenixDDoS.Checkers
   alias PhoenixDDoS.Dredd
   alias PhoenixDDoS.Jail
+  alias PhoenixDDoS.Monitoring.AlertSentry
   alias PhoenixDDoS.RateLimit
   alias PhoenixDDoS.RequestContext
   alias PhoenixDDoS.Telemetry
