@@ -7,8 +7,6 @@ defmodule PhoenixDDoS do
 
   @behaviour Plug
 
-  alias PhoenixDDoS.Engine
-
   @impl Plug
   def init(opts), do: opts
 
@@ -16,6 +14,6 @@ defmodule PhoenixDDoS do
   if Application.compile_env(:phoenix_ddos, :enabled) == false do
     def call(conn, _opts), do: conn
   else
-    def call(%Plug.Conn{} = conn, _opts), do: conn |> Engine.control()
+    def call(%Plug.Conn{} = conn, _opts), do: conn |> PhoenixDDoS.Engine.control()
   end
 end
