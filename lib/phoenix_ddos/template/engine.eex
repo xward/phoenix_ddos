@@ -32,7 +32,6 @@ defmodule PhoenixDDoS.Engine do
   alias PhoenixDDoS.Checkers
   alias PhoenixDDoS.Dredd
   alias PhoenixDDoS.Jail
-  alias PhoenixDDoS.Monitoring.AlertSentry
   alias PhoenixDDoS.RateLimit
   alias PhoenixDDoS.RequestContext
   alias PhoenixDDoS.Telemetry
@@ -85,7 +84,7 @@ defmodule PhoenixDDoS.Engine do
             Jail.send(ip, prot)
 
 <%= if Application.get_env(:phoenix_ddos, :on_jail_alert_to_sentry) do %>
-            AlertSentry.alert_goes_to_jail(prot)
+            PhoenixDDoS.Monitoring.AlertSentry.alert_goes_to_jail(prot)
 <% end %>
 
             Telemetry.push_request_new(:jail)
