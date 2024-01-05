@@ -163,7 +163,7 @@ defmodule PhoenixDDoSTest do
                         ip: "1.2.3.4",
                         method: "GET",
                         path: "/admin/521/dashboard",
-                        route: "/admin/:id/dashboard"
+                        route: "[PhoenixDDoS.Router /admin/:id/dashboard]"
                       }}
     end
 
@@ -176,7 +176,7 @@ defmodule PhoenixDDoSTest do
                         ip: "1.2.3.4",
                         method: "GET",
                         path: "/notfound",
-                        route: nil
+                        route: "unknown route"
                       }}
     end
 

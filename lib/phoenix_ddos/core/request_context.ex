@@ -20,11 +20,17 @@ defmodule PhoenixDDoS.RequestContext do
 
   defp phoenix_route(conn) do
     Application.get_env(:phoenix_ddos, :routers)
-    |> Enum.find_value(fn router ->
-      case Phoenix.Router.route_info(router, conn.method, conn.request_path, nil) do
-        :error -> false
-        %{route: route} -> route
-      end
+    |> Enum.map(fn router ->
+      {router, Phoenix.Router.route_info(router, conn.method, conn.request_path, nil)}
     end)
+    |> Enum.filter(fn
+      {_, %{route: _route}} -> true
+      {_, _} -> false
+    end)
+    |> Enum.map(fn {router, %{route: route}} -> "[#{inspect(router)} #{route}]" end)
+    |> case do
+      [] -> "unknown route"
+      routes -> routes |> Enum.join(" or ")
+    end
   end
 end
