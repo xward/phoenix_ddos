@@ -129,23 +129,9 @@ defmodule PhoenixDDoS.Configure do
     |> Enum.filter(&phoenix_router?/1)
   end
 
-  defp phoenix_router?(module) when is_atom(module) do
-    # one could use Kernel.function_exported?(module, :__routes__, 0)
-    # but exported functions might not be here yet (had issue when having 2 routers)
-    module
-    |> module_functions()
-    |> Enum.find(fn
-      {:__routes__, 0} -> true
-      {_funct, _arity} -> false
-    end)
-  end
-
-  defp module_functions(module) do
-    if Kernel.function_exported?(module, :__info__, 1) do
-      module.__info__(:functions)
-    else
-      []
-    end
+  def phoenix_router?(module) when is_atom(module) do
+    Code.ensure_loaded!(module)
+    function_exported?(module, :__routes__, 0)
   end
 
   # --------------------------------------------------------------
