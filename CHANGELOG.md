@@ -3,6 +3,7 @@
 ## 1.1.17
 
 - fix: more warning fixes
+- fix: manager multi router routes on telemetry and sentry events
 
 ## 1.1.16
 
