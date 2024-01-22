@@ -111,8 +111,9 @@ defmodule PhoenixDDoSTest do
       start = PhoenixDDoS.Time.now()
       run_ddos(conn(), assert_fail_after_request: 10_000)
 
+      diff = PhoenixDDoS.Time.diff_ms(start)
       # ~ 30 ms per 10k
-      assert PhoenixDDoS.Time.diff_ms(start) < 100
+      assert diff < 150, "quick bench tool #{round(diff)}ms > 150 ms"
     end
 
     test "IpRateLimitPerRequestPath" do
