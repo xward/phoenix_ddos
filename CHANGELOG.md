@@ -1,5 +1,8 @@
 # PhoenixDDoS changelog
 
+## 1.1.18
+
+- fix: phoenix router instropection fail on module Hex.API
 ## 1.1.17
 
 - fix: more warning fixes
