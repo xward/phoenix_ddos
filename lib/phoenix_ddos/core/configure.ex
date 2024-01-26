@@ -130,8 +130,8 @@ defmodule PhoenixDDoS.Configure do
   end
 
   def phoenix_router?(module) when is_atom(module) do
-    case Code.ensure_loaded(module) do
-      {:module, module} -> function_exported?(module, :__routes__, 0)
+    case module |> inspect() |> String.contains?("Router") && Code.ensure_loaded?(module) do
+      true -> function_exported?(module, :__routes__, 0)
       _ -> false
     end
   end

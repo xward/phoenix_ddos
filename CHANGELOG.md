@@ -1,5 +1,9 @@
 # PhoenixDDoS changelog
 
+## 1.1.19
+
+- fix: phoenix router instropection too slow on big projects
+
 ## 1.1.18
 
 - fix: phoenix router instropection fail on module Hex.API
