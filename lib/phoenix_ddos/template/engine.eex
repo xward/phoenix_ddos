@@ -109,7 +109,7 @@ defmodule PhoenixDDoS.Engine do
 <%= for {prot, cfg} <- Application.get_env(:phoenix_ddos,:_prots) do %>
   def get_prot_cfg("<%= cfg.id %>"), do: {<%= prot %>, <%= inspect(cfg) %>}
 <% end %>
-  def get_prot_cfg(_), do: {nil, nil}
+  def get_prot_cfg(_id), do: {nil, %{jail_time: {0, :seconds}}}
 
 <%= for ip <- Application.get_env(:phoenix_ddos, :blocklist_ips, []) do %>
   def blocklist_ips?(<%= inspect(ip) %>), do: true

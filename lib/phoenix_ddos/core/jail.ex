@@ -2,7 +2,7 @@ defmodule PhoenixDDoS.Jail do
   @moduledoc """
     Ip got caught, go to jail ! Further request will be rejected and won't be included in rate limits
 
-    iex> PhoenixDDoS.Jail.send('1.2.3.4', Enum.at(Application.get_env( :phoenix_ddos,:_prots),0))
+    iex> PhoenixDDoS.Jail.send(~c"1.2.3.4", Enum.at(Application.get_env( :phoenix_ddos,:_prots),0))
     :ok
     iex> PhoenixDDoS.Jail.ips_in_jail()
     ["1.2.3.4"]
