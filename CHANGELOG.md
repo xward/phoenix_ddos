@@ -1,5 +1,23 @@
 # PhoenixDDoS changelog
 
+## 1.2.0
+
+### Breaking
+
+- path rules match the decoded `path_info` (HEAD counted as GET, POST also counted for PUT/PATCH/DELETE rules)
+- IPv6 clients are keyed by prefix (telemetry/jail ip shows e.g. "2001:db8::/64"), and IPv6 safelist/blocklist entries cover their whole prefix (`ipv6_prefix`, default 64)
+- IPv4-mapped IPv6 clients match IPv4 safelist/blocklist entries
+- invalid safelist/blocklist entries raise at startup
+- requires `cachex ~> 4.0` and Elixir ~> 1.13
+
+### Features and fixes
+
+- feature: bounded caches (`max_entries` for the rate-limit store, `max_jail_entries` for jail and suspicious ips)
+- feature: `PhoenixDDoS.check_ip/1` to protect socket `connect/3`
+- feature: jail log lines and Sentry alerts capped per minute (`max_jail_alerts_per_minute`)
+- perf: route resolved lazily, telemetry metadata built only when handlers are attached; path segments decoded only when containing `%`
+- fix: `phoenix_routers` introspection ignores loaded apps without modules
+
 ## 1.1.22
 
 - fix: jail and suspicious-ip entries never expired with Cachex 4 (`ttl:` ignored, now passes `expire:` too) — reported on GitHub
