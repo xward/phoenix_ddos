@@ -32,6 +32,8 @@ defmodule PhoenixDDoSTest do
         nil
       )
 
+      on_exit(fn -> :telemetry.detach("unit_test_telemetry") end)
+
       :ok
     end
 
@@ -65,6 +67,7 @@ defmodule PhoenixDDoSTest do
       |> put_protections()
 
       assert_not_in_jail(@an_ip)
+      start_early_in_window({2, :second})
       run_ddos(conn(), assert_fail_after_request: 10)
       assert_in_jail(@an_ip)
 
@@ -81,6 +84,7 @@ defmodule PhoenixDDoSTest do
       ]
       |> put_protections()
 
+      start_early_in_window({2, :second})
       run_ddos(conn(), assert_fail_after_request: 10)
 
       run_ddos(conn(%{remote_ip: @another_ip}), assert_fail_after_request: 10)
@@ -92,11 +96,13 @@ defmodule PhoenixDDoSTest do
       ]
       |> put_protections()
 
+      start_early_in_window({2, :second})
       run_ddos(conn(), assert_fail_after_request: 10)
       assert_not_in_jail(@an_ip)
 
       :timer.sleep(3000)
       # fresh quota
+      start_early_in_window({2, :second})
       run_ddos(conn(), assert_fail_after_request: 10)
     end
 
@@ -108,12 +114,14 @@ defmodule PhoenixDDoSTest do
       ]
       |> put_protections()
 
+      start_early_in_window({2, :second})
       start = PhoenixDDoS.Time.now()
       run_ddos(conn(), assert_fail_after_request: 10_000)
 
       diff = PhoenixDDoS.Time.diff_ms(start)
-      # ~ 30 ms per 10k
-      assert diff < 150, "quick bench tool #{round(diff)}ms > 150 ms"
+      # 55-110 ms per 10k on a dev machine under load: a gross-regression guard,
+      # not a benchmark (see `mix benchmark`), so the bound leaves headroom
+      assert diff < 500, "quick bench tool #{round(diff)}ms > 500 ms"
     end
 
     test "IpRateLimitPerRequestPath" do
@@ -300,6 +308,15 @@ defmodule PhoenixDDoSTest do
       conn(%{request_path: path, method: method})
       | path_info: for(s <- String.split(path, "/"), s != "", do: s)
     }
+  end
+
+  # Rate-limit windows are aligned on the wall clock (RateLimit.window_key/3):
+  # a run asserting an exact rejection point must not straddle a window
+  # boundary. Start it with at least half a window ahead (runs take a few ms).
+  defp start_early_in_window(period) do
+    period_ms = PhoenixDDoS.Time.period_to_msec(period)
+    left = period_ms - rem(System.os_time(:millisecond), period_ms)
+    if left < div(period_ms, 2), do: Process.sleep(left + 10)
   end
 
   defp capture_jail_run_within_one_minute do

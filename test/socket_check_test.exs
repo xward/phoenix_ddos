@@ -67,4 +67,14 @@ defmodule PhoenixDDoS.SocketCheckTest do
     assert_in_jail(@ip)
     assert PhoenixDDoS.check_ip(@ip) == :error
   end
+
+  test "ip over a rate limit without jail is refused but not jailed" do
+    put_protections([
+      {PhoenixDDoS.IpRateLimit, allowed: 1, period: {1, :hour}, jail_time: nil}
+    ])
+
+    assert PhoenixDDoS.check_ip(@ip) == :ok
+    assert PhoenixDDoS.check_ip(@ip) == :error
+    assert_not_in_jail(@ip)
+  end
 end

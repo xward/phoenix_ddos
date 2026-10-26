@@ -24,11 +24,26 @@ defmodule PhoenixDDoS.SupervisorTest do
     {:ok, _} = Application.ensure_all_started(:phoenix_ddos)
   end
 
+  # the limit hook prunes on a schedule (every second): poll until it has run
+  defp wait_size_within(cache, max, deadline \\ System.monotonic_time(:millisecond) + 3_000) do
+    {:ok, size} = Cachex.size(cache)
+
+    cond do
+      size <= max ->
+        size
+
+      System.monotonic_time(:millisecond) > deadline ->
+        size
+
+      true ->
+        Process.sleep(50)
+        wait_size_within(cache, max, deadline)
+    end
+  end
+
   test "store is bounded" do
     for i <- 1..5_000, do: Cachex.put(:phoenix_ddos_store, i, true)
-    Process.sleep(1_100)
-    assert {:ok, size} = Cachex.size(:phoenix_ddos_store)
-    assert size <= 1_000
+    assert wait_size_within(:phoenix_ddos_store, 1_000) <= 1_000
   end
 
   test "jail and suspicious ips are bounded by max_jail_entries" do
@@ -37,10 +52,7 @@ defmodule PhoenixDDoS.SupervisorTest do
       Cachex.put(:phoenix_ddos_suspicious_ips, i, true)
     end
 
-    Process.sleep(1_100)
-    assert {:ok, jail} = Cachex.size(:phoenix_ddos_jail)
-    assert {:ok, sus} = Cachex.size(:phoenix_ddos_suspicious_ips)
-    assert jail <= 100
-    assert sus <= 100
+    assert wait_size_within(:phoenix_ddos_jail, 100) <= 100
+    assert wait_size_within(:phoenix_ddos_suspicious_ips, 100) <= 100
   end
 end
