@@ -27,6 +27,7 @@ defmodule PhoenixDDoS.Telemetry do
 
     * `:ip` - blocked ip
     * `:protection` - The protection name and configuration that caught this ip
+    * `:ban` - the `PhoenixDDoS.Ban`
 
   * `[:phoenix_ddos, :jail, :count]` - when the number of ip in jail increase
 
@@ -35,6 +36,19 @@ defmodule PhoenixDDoS.Telemetry do
     * `:system_time` - The system's time when the event occured
     * `:total` - The total amount of ip currently in jail
 
+
+  ## Store Events
+
+  * `[:phoenix_ddos, :store, :error]` - the configured `PhoenixDDoS.Store` failed, the jail is not affected
+
+    Measurements:
+
+    * `:system_time` - The system's time when the event occured
+
+    Metas:
+
+    * `:operation` - `:init`, `:active_bans`, `:insert_ban` or `:release_ban`
+    * `:reason` - the error or the exception
 
   ## Request Events
 

@@ -81,7 +81,7 @@ defmodule PhoenixDDoS.Engine do
               "🛡️ PhoenixDDoS: ip[#{ip}] goes to JAIL. From prot #{inspect(prot)} with love"
             )
 
-            Jail.send(ip, prot)
+            Jail.send(ip, prot, conn)
 
 <%= if Application.get_env(:phoenix_ddos, :on_jail_alert_to_sentry) do %>
             PhoenixDDoS.Monitoring.AlertSentry.alert_goes_to_jail(prot)
