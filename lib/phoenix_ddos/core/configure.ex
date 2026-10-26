@@ -164,8 +164,9 @@ defmodule PhoenixDDoS.Configure do
 
   defp default_jail_time, do: Application.get_env(:phoenix_ddos, :jail_time, {15, :minutes})
 
-  # transform "/admin/:id/dashboard" to "_, _, "admin", _, "dashboard""
-  # transform {:get, "/admin/:id/dashboard"} to ""GET", _, "admin", _, "dashboard""
+  # transform "/admin/:id/dashboard" to "_, "admin", _, "dashboard""
+  # transform {:get, "/admin/:id/dashboard"} to ""GET", "admin", _, "dashboard""
+  # empty segments are dropped, like the engine does on the request path
   @http_methods [:get, :post, :delete, :head, :put, :patch, :options]
   defp path_to_pattern_match_chunk({method, path}) when method in @http_methods do
     path_to_pattern_match_chunk(path, String.upcase("\"#{method}\""))
@@ -174,16 +175,14 @@ defmodule PhoenixDDoS.Configure do
   defp path_to_pattern_match_chunk({method, _path}), do: raise("unknown method #{method}")
 
   defp path_to_pattern_match_chunk(path, method \\ "_") do
-    "#{method}, " <>
-      (path
-       |> String.split("/")
-       |> Enum.map_join(
-         ", ",
-         fn
-           "" -> "_"
-           <<":", _rest::binary>> -> "_"
-           chunk -> "\"#{chunk}\""
-         end
-       ))
+    chunks =
+      for chunk <- String.split(path, "/"), chunk != "" do
+        case chunk do
+          <<":", _rest::binary>> -> "_"
+          chunk -> "\"#{chunk}\""
+        end
+      end
+
+    Enum.join([method | chunks], ", ")
   end
 end
