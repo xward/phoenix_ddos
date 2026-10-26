@@ -58,6 +58,27 @@ defmodule PhoenixDDoS.IPTest do
     |> assert_rejected()
   end
 
+  test "init is idempotent with an ipv6 list entry, user config untouched" do
+    Application.put_env(:phoenix_ddos, :blocklist_ips, ["2001:db8::1"])
+    flush_protections()
+    PhoenixDDoS.Configure.init()
+
+    assert Application.get_env(:phoenix_ddos, :blocklist_ips) == ["2001:db8::1"]
+
+    conn(:get, "/")
+    |> Map.put(:remote_ip, {0x2001, 0xDB8, 0, 0, 7, 7, 7, 7})
+    |> call()
+    |> assert_rejected()
+  end
+
+  test "lookup_key/1 normalizes addresses and passes keys through" do
+    assert IP.lookup_key("2001:db8::1") == ~c"2001:db8::/64"
+    assert IP.lookup_key({0x2001, 0xDB8, 0, 0, 1, 2, 3, 4}) == ~c"2001:db8::/64"
+    assert IP.lookup_key("::ffff:6.6.6.6") == ~c"6.6.6.6"
+    assert IP.lookup_key(~c"1.2.3.4") == ~c"1.2.3.4"
+    assert IP.lookup_key("2001:db8::/64") == ~c"2001:db8::/64"
+  end
+
   test "ipv6 blocklist entry covers the whole prefix" do
     Application.put_env(:phoenix_ddos, :blocklist_ips, ["2001:db8::1"])
     flush_protections()

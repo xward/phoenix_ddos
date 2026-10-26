@@ -37,9 +37,9 @@ defmodule PhoenixDDoS.Configure do
       |> List.flatten()
     )
 
-    # convert ip string to charlist
-    convert_ip_to_charlist(:safelist_ips)
-    convert_ip_to_charlist(:blocklist_ips)
+    # normalized ip keys, kept apart from the user config so init is idempotent
+    put_ip_keys(:safelist_ips, :_safelist_ips)
+    put_ip_keys(:blocklist_ips, :_blocklist_ips)
 
     generate_checkers()
 
@@ -92,6 +92,11 @@ defmodule PhoenixDDoS.Configure do
         end,
         fn {_request_path, prot, cfg} -> {prot, cfg} end
       )
+      # a shared rule may list two paths with the same pattern ({:get, p} and
+      # {:head, p}): count it once per request
+      |> Map.new(fn {chunks, prots} ->
+        {chunks, Enum.uniq_by(prots, fn {_, cfg} -> cfg.id end)}
+      end)
 
     TemplateHelper.compile(
       %{
@@ -102,12 +107,13 @@ defmodule PhoenixDDoS.Configure do
     )
   end
 
-  def convert_ip_to_charlist(key) do
+  defp put_ip_keys(user_key, key) do
     Application.put_env(
       :phoenix_ddos,
       key,
-      Application.get_env(:phoenix_ddos, key, [])
+      Application.get_env(:phoenix_ddos, user_key, [])
       |> Enum.map(&PhoenixDDoS.IP.normalize!/1)
+      |> Enum.uniq()
     )
   end
 
@@ -169,8 +175,11 @@ defmodule PhoenixDDoS.Configure do
   # transform "/admin/:id/dashboard" to `_, "admin", _, "dashboard"`
   # transform {:get, "/admin/:id/dashboard"} to `"GET", "admin", _, "dashboard"`
   # Empty segments are dropped: patterns are matched against the normalized
-  # segments built by `PhoenixDDoS.Engine.match_segments/1`.
+  # segments built by `PhoenixDDoS.Engine.match_segments/1`, where HEAD is GET
+  # (Phoenix serves HEAD with GET routes): a :head rule uses the GET pattern.
   @http_methods [:get, :post, :delete, :head, :put, :patch, :options]
+  defp path_to_pattern_match_chunk({:head, path}), do: path_to_pattern_match_chunk({:get, path})
+
   defp path_to_pattern_match_chunk({method, path}) when method in @http_methods do
     path_to_pattern_match_chunk(path, inspect(method |> Atom.to_string() |> String.upcase()))
   end

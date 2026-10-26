@@ -33,6 +33,20 @@ defmodule PhoenixDDoS.IP do
     end
   end
 
+  # For lookups by callers (e.g. PhoenixDDoS.Jail): an address (tuple, string
+  # or charlist) becomes its key; anything else, such as an already normalized
+  # prefix key like "2001:db8::/64", is returned unchanged as a charlist.
+  @spec lookup_key(:inet.ip_address() | String.t() | charlist) :: charlist
+  def lookup_key(ip) when is_tuple(ip), do: key(ip)
+  def lookup_key(ip) when is_binary(ip), do: ip |> String.to_charlist() |> lookup_key()
+
+  def lookup_key(ip) when is_list(ip) do
+    case :inet.parse_address(ip) do
+      {:ok, address} -> key(address)
+      {:error, _} -> ip
+    end
+  end
+
   defp ntoa(ip) do
     case :inet.ntoa(ip) do
       {:error, _} -> raise ArgumentError, "invalid IP address: #{inspect(ip)}"

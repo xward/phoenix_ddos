@@ -120,7 +120,7 @@ defmodule PhoenixDDoS.Engine do
       safelist_ips?(ip) ->
         :safelisted
 
-      Jail.in_jail?(ip) ->
+      Jail.jailed?(ip) ->
         :jailed
 
       true ->
@@ -172,10 +172,10 @@ defmodule PhoenixDDoS.Engine do
 <% end %>
   def get_prot_cfg(_id), do: {nil, %{jail_time: {0, :seconds}}}
 
-  <% # lists are normalized keys; a membership test (not clauses) keeps the type checker quiet when empty %>
-  @blocklist <%= inspect(Application.get_env(:phoenix_ddos, :blocklist_ips, [])) %>
+  <% # normalized keys (see PhoenixDDoS.Configure); a membership test (not clauses) keeps the type checker quiet when empty %>
+  @blocklist <%= inspect(Application.get_env(:phoenix_ddos, :_blocklist_ips, [])) %>
   def blocklist_ips?(ip), do: Enum.member?(@blocklist, ip)
 
-  @safelist <%= inspect(Application.get_env(:phoenix_ddos, :safelist_ips, [])) %>
+  @safelist <%= inspect(Application.get_env(:phoenix_ddos, :_safelist_ips, [])) %>
   def safelist_ips?(ip), do: Enum.member?(@safelist, ip)
 end
