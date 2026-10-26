@@ -23,6 +23,7 @@ High performance application-layer DDoS protection for Elixir Phoenix.
 - Setup
   - [Installation](#installation)
   - [Configuration](#configuration)
+  - [Persisting bans](#persisting-bans)
 - Monitoring
   - [Telemetry events](https://hexdocs.pm/phoenix_ddos/PhoenixDDoS.Telemetry.html)
   - [Sentry](#configuration)
@@ -120,6 +121,7 @@ config :phoenix_ddos,
 | list | `safelist_ips`            | []            | bypass all protections ips                                                                      |
 | list | `blocklist_ips`           | []            | always blocked ips                                                                              |
 | bool | `on_jail_alert_to_sentry` | false         | notify slack when an ip get jailed                                                              |
+| mod  | `store`                   | nil           | keep the bans in your database or anywhere else, @see [Persisting bans](#persisting-bans)       |
 
 
 [protection_examples]: #examples-with-protection-phoenixddosipratelimit
@@ -185,6 +187,37 @@ is equivalent to:
 ```
 
 [remote_ip_github]: https://github.com/ajvondrak/remote_ip
+
+## Persisting bans
+
+By default the jail lives in memory: a restart empties it. Configure a store to keep the bans
+in your database too: they go back to jail at boot, and you can list them from an admin page.
+The jail in memory stays the only thing consulted on the request path, the store is written in
+the background.
+
+### In your database with Ecto
+
+```elixir
+config :phoenix_ddos, store: {PhoenixDDoS.Store.Ecto, repo: MyApp.Repo}
+```
+
+with a migration creating the table:
+
+```elixir
+defmodule MyApp.Repo.Migrations.AddPhoenixDdosBans do
+  use Ecto.Migration
+
+  def up, do: PhoenixDDoS.Store.Ecto.Migration.up()
+  def down, do: PhoenixDDoS.Store.Ecto.Migration.down()
+end
+```
+
+### With your own code
+
+A store is a module implementing the 4 callbacks of `PhoenixDDoS.Store`, called in the
+background, never on the request path. `insert_ban/3` gets the request that got the ip jailed:
+link the ip to a user, add a note, send a mail... See the examples in
+[PhoenixDDoS.Store](https://hexdocs.pm/phoenix_ddos/PhoenixDDoS.Store.html).
 
 
 ## Community

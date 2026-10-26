@@ -27,6 +27,11 @@ defmodule PhoenixDDoS.Supervisor do
       }
     ]
 
-    Supervisor.init(children, strategy: :one_for_one)
+    Supervisor.init(children ++ store_children(), strategy: :one_for_one)
+  end
+
+  # the store server exists only when a store is configured, see PhoenixDDoS.Store
+  defp store_children do
+    if Application.get_env(:phoenix_ddos, :store), do: [PhoenixDDoS.Store.Server], else: []
   end
 end

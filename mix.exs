@@ -71,6 +71,10 @@ defmodule PhoenixDDoS.MixProject do
       {:plug, "~> 1.14"},
       {:cachex, ">= 3.0.0"},
       {:telemetry, ">= 0.0.0"},
+      # optional: PhoenixDDoS.Store.Ecto
+      {:ecto_sql, "~> 3.11", optional: true},
+      # sqlite to exercise PhoenixDDoS.Store.Ecto
+      {:ecto_sqlite3, "~> 0.17", only: :test},
       {:phoenix, ">= 1.5.0", runtime: false},
       {:dialyxir, "~> 1.0", only: [:test, :dev], runtime: false},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
