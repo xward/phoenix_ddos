@@ -115,15 +115,20 @@ defmodule PhoenixDDoS.Configure do
   # Routers introspection
   # --------------------------------------------------------------
 
-  defp phoenix_routers do
-    Application.loaded_applications()
-    |> Enum.map(fn {app, _desc, _v} -> app end)
-    |> Enum.map(fn app ->
-      {:ok, modules} = :application.get_key(app, :modules)
-      modules
+  @doc false
+  def phoenix_routers(apps \\ loaded_app_names()) do
+    apps
+    |> Enum.flat_map(fn app ->
+      case :application.get_key(app, :modules) do
+        {:ok, modules} -> modules
+        _ -> []
+      end
     end)
-    |> List.flatten()
     |> Enum.filter(&phoenix_router?/1)
+  end
+
+  defp loaded_app_names do
+    Enum.map(Application.loaded_applications(), fn {app, _desc, _v} -> app end)
   end
 
   def phoenix_router?(module) when is_atom(module) do
