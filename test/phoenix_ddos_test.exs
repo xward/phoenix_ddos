@@ -271,6 +271,23 @@ defmodule PhoenixDDoSTest do
 
       assert_receive {:telemetry_event, [:phoenix_ddos, :request, :new], %{}, %{decision: :block}}
     end
+
+    test "jail alerts are capped per minute" do
+      Application.put_env(:phoenix_ddos, :max_jail_alerts_per_minute, 3)
+      on_exit(fn -> Application.delete_env(:phoenix_ddos, :max_jail_alerts_per_minute) end)
+
+      [
+        {PhoenixDDoS.IpRateLimit, allowed: 0, period: {2, :second}, jail_time: {1, :minute}}
+      ]
+      |> put_protections()
+
+      # The cap is per wall-clock minute: if a minute boundary falls inside a run
+      # (milliseconds long, so very unlikely) the counts could split, so retry the run.
+      log = capture_jail_run_within_one_minute()
+
+      assert length(Regex.scan(~r/goes to JAIL/, log)) == 3
+      assert length(Regex.scan(~r/alerts suppressed/, log)) == 1
+    end
   end
 
   defp conn(attr \\ %{}) do
@@ -283,5 +300,20 @@ defmodule PhoenixDDoSTest do
       conn(%{request_path: path, method: method})
       | path_info: for(s <- String.split(path, "/"), s != "", do: s)
     }
+  end
+
+  defp capture_jail_run_within_one_minute do
+    Cachex.clear(:phoenix_ddos_store)
+    Cachex.clear(:phoenix_ddos_jail)
+    minute = div(System.os_time(:millisecond), 60_000)
+
+    log =
+      ExUnit.CaptureLog.capture_log(fn ->
+        for i <- 1..10, do: conn(%{remote_ip: {7, 7, 7, i}}) |> call()
+      end)
+
+    if div(System.os_time(:millisecond), 60_000) == minute,
+      do: log,
+      else: capture_jail_run_within_one_minute()
   end
 end
