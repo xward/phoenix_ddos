@@ -135,6 +135,27 @@ defmodule PhoenixDDoSTest do
       run_ddos(conn(%{request_path: "/user"}), :never_fail)
     end
 
+    test "IpRateLimitPerRequestPath counts every spelling the router serves as the same path" do
+      [
+        {PhoenixDDoS.IpRateLimitPerRequestPath,
+         request_paths: ["/admin", "/admin/:id/dashboard"],
+         allowed: 3,
+         period: {1, :minute},
+         jail_time: nil}
+      ]
+      |> put_protections()
+
+      # all routed by phoenix to /admin: they must share its quota
+      ["/admin", "//admin", "/admin/"] |> Enum.each(&(conn(%{request_path: &1}) |> call()))
+      run_ddos(conn(%{request_path: "/%61dmin"}), :always_fail)
+
+      run_ddos(conn(%{request_path: "/admin//23/dashboard"}), assert_fail_after_request: 3)
+      run_ddos(conn(%{request_path: "/admin/23/dashboard/"}), :always_fail)
+
+      run_ddos(conn(%{request_path: "/user"}), :never_fail)
+      run_ddos(conn(%{request_path: "/admin%zz"}), :never_fail)
+    end
+
     test "IpRateLimitPerRequestPath shared quota along all paths" do
       [
         {PhoenixDDoS.IpRateLimitPerRequestPath,
