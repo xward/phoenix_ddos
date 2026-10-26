@@ -31,6 +31,12 @@ defmodule PhoenixDDoS.Supervisor do
         start:
           {Cachex, :start_link,
            [:phoenix_ddos_suspicious_ips, [hooks: [limit(max_jail_entries)]]]}
+      },
+      # jail alert counter (PhoenixDDoS.Monitoring.AlertThrottle): a couple of
+      # expiring keys, unbounded so that eviction never resets the cap
+      %{
+        id: :phoenix_ddos_alerts,
+        start: {Cachex, :start_link, [:phoenix_ddos_alerts, []]}
       }
     ]
 

@@ -59,6 +59,10 @@ defmodule PhoenixDDoS.Engine do
     end
   end
 
+<%= if request_path_registers != [] do %>
+  defp segments(%Plug.Conn{} = conn), do: match_segments(conn)
+  defp segments(segments) when is_list(segments), do: segments
+
   <% # Plug.MethodOverride runs after this plug: a POST may become PUT/PATCH/DELETE %>
   defp request_checkers(ip, ["POST" | path] = segments) do
     ["PUT", "PATCH", "DELETE"]
@@ -68,13 +72,14 @@ defmodule PhoenixDDoS.Engine do
   end
 
   defp request_checkers(ip, segments), do: Checkers.checkers(ip, segments)
+<% end %>
 
   def control(conn) do
     PhoenixDDoS.RequestContext.feed(conn)
 
     ip = RequestContext.get(:ip)
 
-    case evaluate(ip, match_segments(conn)) do
+    case evaluate(ip, conn) do
       :blocklisted ->
         Telemetry.push_request_new(:block)
         Dredd.reject(conn)
@@ -112,7 +117,9 @@ defmodule PhoenixDDoS.Engine do
     end
   end
 
-  defp evaluate(ip, segments) do
+  <% # `request` is the conn (from control/1) or the segments (from decide/2);
+     # segments are only built when counting, and only if there are path rules %>
+  defp evaluate(ip, <%= if request_path_registers == [] do %>_<% end %>request) do
     cond do
       blocklist_ips?(ip) ->
         :blocklisted
@@ -127,7 +134,7 @@ defmodule PhoenixDDoS.Engine do
         decisions =
 <%= if request_path_registers != [] do %>
         ip
-        |> request_checkers(segments)
+        |> request_checkers(segments(request))
 <% else %>
         ip
         |> Checkers.checkers()
@@ -172,10 +179,11 @@ defmodule PhoenixDDoS.Engine do
 <% end %>
   def get_prot_cfg(_id), do: {nil, %{jail_time: {0, :seconds}}}
 
-  <% # normalized keys (see PhoenixDDoS.Configure); a membership test (not clauses) keeps the type checker quiet when empty %>
-  @blocklist <%= inspect(Application.get_env(:phoenix_ddos, :_blocklist_ips, [])) %>
-  def blocklist_ips?(ip), do: Enum.member?(@blocklist, ip)
+  <% # sets of normalized keys (see PhoenixDDoS.Configure); a membership test
+     # (not clauses) keeps the type checker quiet when empty %>
+  @blocklist MapSet.new(<%= inspect(Application.get_env(:phoenix_ddos, :_blocklist_ips, [])) %>)
+  def blocklist_ips?(ip), do: MapSet.member?(@blocklist, ip)
 
-  @safelist <%= inspect(Application.get_env(:phoenix_ddos, :_safelist_ips, [])) %>
-  def safelist_ips?(ip), do: Enum.member?(@safelist, ip)
+  @safelist MapSet.new(<%= inspect(Application.get_env(:phoenix_ddos, :_safelist_ips, [])) %>)
+  def safelist_ips?(ip), do: MapSet.member?(@safelist, ip)
 end

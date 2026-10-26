@@ -291,9 +291,29 @@ defmodule PhoenixDDoSTest do
 
       # The cap is per wall-clock minute: if a minute boundary falls inside a run
       # (milliseconds long, so very unlikely) the counts could split, so retry the run.
-      log = capture_jail_run_within_one_minute()
+      log = capture_jail_run_within_one_minute(fn -> jail_ips(1..10) end)
 
       assert length(Regex.scan(~r/goes to JAIL/, log)) == 3
+      assert length(Regex.scan(~r/alerts suppressed/, log)) == 1
+    end
+
+    test "jail alert cap survives a rate-limit store reset (eviction)" do
+      Application.put_env(:phoenix_ddos, :max_jail_alerts_per_minute, 2)
+      on_exit(fn -> Application.delete_env(:phoenix_ddos, :max_jail_alerts_per_minute) end)
+
+      [
+        {PhoenixDDoS.IpRateLimit, allowed: 0, period: {2, :second}, jail_time: {1, :minute}}
+      ]
+      |> put_protections()
+
+      log =
+        capture_jail_run_within_one_minute(fn ->
+          jail_ips(1..2)
+          Cachex.clear(:phoenix_ddos_store)
+          jail_ips(3..4)
+        end)
+
+      assert length(Regex.scan(~r/goes to JAIL/, log)) == 2
       assert length(Regex.scan(~r/alerts suppressed/, log)) == 1
     end
   end
@@ -319,18 +339,18 @@ defmodule PhoenixDDoSTest do
     if left < div(period_ms, 2), do: Process.sleep(left + 10)
   end
 
-  defp capture_jail_run_within_one_minute do
+  defp jail_ips(range), do: for(i <- range, do: conn(%{remote_ip: {7, 7, 7, i}}) |> call())
+
+  defp capture_jail_run_within_one_minute(run) do
     Cachex.clear(:phoenix_ddos_store)
     Cachex.clear(:phoenix_ddos_jail)
+    Cachex.clear(:phoenix_ddos_alerts)
     minute = div(System.os_time(:millisecond), 60_000)
 
-    log =
-      ExUnit.CaptureLog.capture_log(fn ->
-        for i <- 1..10, do: conn(%{remote_ip: {7, 7, 7, i}}) |> call()
-      end)
+    log = ExUnit.CaptureLog.capture_log(run)
 
     if div(System.os_time(:millisecond), 60_000) == minute,
       do: log,
-      else: capture_jail_run_within_one_minute()
+      else: capture_jail_run_within_one_minute(run)
   end
 end

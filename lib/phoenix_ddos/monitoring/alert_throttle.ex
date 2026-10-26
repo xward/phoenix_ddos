@@ -3,10 +3,13 @@ defmodule PhoenixDDoS.Monitoring.AlertThrottle do
 
   # Caps jail alerts (log + sentry) per wall-clock minute so an attack from many
   # IPs can't flood logs or Sentry. Telemetry is never capped.
+  # The counter lives in its own unbounded cache (one key per minute, expiring):
+  # in the size-bounded :phoenix_ddos_store, eviction under load could drop it
+  # and reset the cap.
 
   require Logger
 
-  @store :phoenix_ddos_store
+  @store :phoenix_ddos_alerts
   @window_ms 60_000
   @default_max 10
 
