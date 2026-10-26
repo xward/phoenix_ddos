@@ -11,6 +11,9 @@ defmodule PhoenixDDoS.RequestContext do
     })
   end
 
+  # socket / non-conn callers: only the client key is known
+  def feed_ip(ip_key), do: Process.put(:phoenix_ddos, %{ip: ip_key})
+
   def get(key), do: Process.get(:phoenix_ddos)[key]
 
   def pull(:pretty) do

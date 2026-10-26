@@ -16,4 +16,29 @@ defmodule PhoenixDDoS do
   else
     def call(%Plug.Conn{} = conn, _opts), do: conn |> PhoenixDDoS.Engine.control()
   end
+
+  @doc """
+  Checks a client address against blocklist, safelist, jail and the global IP
+  rate limits. Meant for `Phoenix.Socket.connect/3` (socket transports are
+  dispatched by the Endpoint before any plug runs).
+
+  Pass the address your app has determined for the client; this function does
+  not read `peer_data` itself, since behind a reverse proxy that is the
+  proxy's address. Counts as one request for the global IP rules. Path based
+  rules are not applied.
+  """
+  @spec check_ip(:inet.ip_address()) :: :ok | :error
+  if Application.compile_env(:phoenix_ddos, :enabled) == false do
+    def check_ip(_ip), do: :ok
+  else
+    def check_ip(ip) when is_tuple(ip) do
+      key = PhoenixDDoS.IP.key(ip)
+      PhoenixDDoS.RequestContext.feed_ip(key)
+
+      case PhoenixDDoS.Engine.decide(key, []) do
+        :pass -> :ok
+        _ -> :error
+      end
+    end
+  end
 end

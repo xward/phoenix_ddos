@@ -69,39 +69,69 @@ defmodule PhoenixDDoS.Engine do
 
   defp request_checkers(ip, segments), do: Checkers.checkers(ip, segments)
 
-  <% # returns {decision, prot_that_decide_it} %>
   def control(conn) do
     PhoenixDDoS.RequestContext.feed(conn)
 
     ip = RequestContext.get(:ip)
 
-    cond do
-<%= if Application.get_env(:phoenix_ddos, :blocklist_ips, []) != [] do %>
-      blocklist_ips?(ip) ->
+    case evaluate(ip, match_segments(conn)) do
+      :blocklisted ->
         Telemetry.push_request_new(:block)
-
         Dredd.reject(conn)
-<% end %>
-<%= if Application.get_env(:phoenix_ddos, :safelist_ips, []) != [] do %>
-      safelist_ips?(ip) ->
-        Telemetry.push_request_new(:pass)
 
+      :safelisted ->
+        Telemetry.push_request_new(:pass)
         conn
-<% end %>
+
+      :jailed ->
+        Dredd.reject(conn)
+
+      :jail ->
+        Telemetry.push_request_new(:jail)
+        Dredd.reject(conn)
+
+      :block ->
+        Telemetry.push_request_new(:block)
+        Dredd.reject(conn)
+
+      :pass ->
+        Telemetry.push_request_new(:pass)
+        conn
+    end
+  end
+
+  <% # shared decision for a client key (see PhoenixDDoS.IP.key/1) and the
+     # [method | path segments] it is requesting; no conn needed %>
+  @spec decide(charlist, [String.t()]) :: :pass | :block | :jail
+  def decide(ip, segments) do
+    case evaluate(ip, segments) do
+      :safelisted -> :pass
+      :pass -> :pass
+      :jail -> :jail
+      _ -> :block
+    end
+  end
+
+  defp evaluate(ip, segments) do
+    cond do
+      blocklist_ips?(ip) ->
+        :blocklisted
+
+      safelist_ips?(ip) ->
+        :safelisted
 
       Jail.in_jail?(ip) ->
-        Dredd.reject(conn)
+        :jailed
 
       true ->
         decisions =
 <%= if request_path_registers != [] do %>
         ip
-        |> request_checkers(match_segments(conn))
+        |> request_checkers(segments)
 <% else %>
         ip
         |> Checkers.checkers()
 <% end %>
-        # |> IO.inspect()
         |> RateLimit.batch_check()
 
         cond do
@@ -121,40 +151,31 @@ defmodule PhoenixDDoS.Engine do
             Cachex.del(:phoenix_ddos_store, window_key)
 
 <%= if Application.get_env(:phoenix_ddos, :on_jail_alert_to_sentry) do %>
-            if alert?, do: PhoenixDDoS.Monitoring.AlertSentry.alert_goes_to_jail(prot)
+            if alert? and RequestContext.get(:method) != nil,
+              do: PhoenixDDoS.Monitoring.AlertSentry.alert_goes_to_jail(prot)
 <% end %>
 
-            Telemetry.push_request_new(:jail)
-
-            Dredd.reject(conn)
+            :jail
 
           decisions[:block] ->
-            Telemetry.push_request_new(:block)
-
             <% # for now we don't log block since it could cause log overload %>
-            Dredd.reject(conn)
+            :block
 
           true ->
-            Telemetry.push_request_new(:pass)
-
-            conn
+            :pass
         end
-      end
+    end
   end
-
 
 <%= for {prot, cfg} <- Application.get_env(:phoenix_ddos,:_prots) do %>
   def get_prot_cfg("<%= cfg.id %>"), do: {<%= prot %>, <%= inspect(cfg) %>}
 <% end %>
   def get_prot_cfg(_id), do: {nil, %{jail_time: {0, :seconds}}}
 
-<%= for ip <- Application.get_env(:phoenix_ddos, :blocklist_ips, []) do %>
-  def blocklist_ips?(<%= inspect(ip) %>), do: true
-<% end %>
-  def blocklist_ips?(_), do: false
+  <% # lists are normalized keys; a membership test (not clauses) keeps the type checker quiet when empty %>
+  @blocklist <%= inspect(Application.get_env(:phoenix_ddos, :blocklist_ips, [])) %>
+  def blocklist_ips?(ip), do: Enum.member?(@blocklist, ip)
 
-<%= for ip <- Application.get_env(:phoenix_ddos, :safelist_ips, []) do %>
-  def safelist_ips?(<%= inspect(ip) %>), do: true
-<% end %>
-  def safelist_ips?(_), do: false
+  @safelist <%= inspect(Application.get_env(:phoenix_ddos, :safelist_ips, [])) %>
+  def safelist_ips?(ip), do: Enum.member?(@safelist, ip)
 end
