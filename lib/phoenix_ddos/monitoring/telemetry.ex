@@ -66,6 +66,11 @@ defmodule PhoenixDDoS.Telemetry do
   end
 
   def push_request_new(decision) do
-    push([:request, :new], %{}, Map.put(RequestContext.pull(:pretty), :decision, decision))
+    # skip building metadata (route resolution) when nobody listens
+    if :telemetry.list_handlers([:phoenix_ddos, :request, :new]) != [] do
+      push([:request, :new], %{}, Map.put(RequestContext.pull(:pretty), :decision, decision))
+    end
+
+    :ok
   end
 end

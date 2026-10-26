@@ -7,21 +7,26 @@ defmodule PhoenixDDoS.RequestContext do
     Process.put(:phoenix_ddos, %{
       ip: PhoenixDDoS.IP.key(conn.remote_ip),
       method: conn.method,
-      request_path: conn.request_path,
-      route: phoenix_route(conn)
+      request_path: conn.request_path
     })
   end
 
   def get(key), do: Process.get(:phoenix_ddos)[key]
 
   def pull(:pretty) do
-    %{ip: "#{get(:ip)}", method: get(:method), route: get(:route), path: get(:request_path)}
+    %{
+      ip: "#{get(:ip)}",
+      method: get(:method),
+      route: phoenix_route(get(:method), get(:request_path)),
+      path: get(:request_path)
+    }
   end
 
-  defp phoenix_route(conn) do
+  # resolved on demand: only telemetry / sentry metadata need it
+  defp phoenix_route(method, request_path) do
     Application.get_env(:phoenix_ddos, :routers)
     |> Enum.map(fn router ->
-      {router, Phoenix.Router.route_info(router, conn.method, conn.request_path, nil)}
+      {router, Phoenix.Router.route_info(router, method, request_path, nil)}
     end)
     |> Enum.filter(fn
       {_, %{route: _route}} -> true

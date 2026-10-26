@@ -21,3 +21,15 @@ defmodule PhoenixDDoS.Router do
     get("/user", AController, :home)
   end
 end
+
+defmodule PhoenixDDoS.CountingRouter do
+  @moduledoc false
+  # delegates to PhoenixDDoS.Router, counting route resolutions in the process dictionary
+
+  def __match_route__(path, method, host) do
+    Process.put(:counting_router_calls, calls() + 1)
+    PhoenixDDoS.Router.__match_route__(path, method, host)
+  end
+
+  def calls, do: Process.get(:counting_router_calls, 0)
+end

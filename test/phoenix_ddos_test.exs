@@ -217,6 +217,22 @@ defmodule PhoenixDDoSTest do
       assert_receive {:telemetry_event, [:phoenix_ddos, :request, :new], %{}, %{decision: :block}}
     end
 
+    test "blocklisted request does not resolve route" do
+      Application.put_env(:phoenix_ddos, :blocklist_ips, [@an_ip |> :inet.ntoa()])
+      PhoenixDDoS.Configure.init()
+
+      previous_routers = Application.get_env(:phoenix_ddos, :routers)
+      Application.put_env(:phoenix_ddos, :routers, [PhoenixDDoS.CountingRouter])
+      :telemetry.detach("unit_test_telemetry")
+
+      on_exit(fn -> Application.put_env(:phoenix_ddos, :routers, previous_routers) end)
+
+      Process.put(:counting_router_calls, 0)
+      conn() |> call() |> assert_rejected()
+
+      assert PhoenixDDoS.CountingRouter.calls() == 0
+    end
+
     test "ip released from jail gets a fresh quota" do
       [
         {PhoenixDDoS.IpRateLimit, allowed: 3, period: {1, :hour}, jail_time: {1, :second}}
