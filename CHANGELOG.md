@@ -1,5 +1,14 @@
 # PhoenixDDoS changelog
 
+## 1.1.22
+
+- fix: jail and suspicious-ip entries never expired with Cachex 4 (`ttl:` ignored, now passes `expire:` too) — reported on GitHub
+- fix: `Jail.suspicious_ip?/1` binary clause
+- fix: rate-limit counters are keyed per window, no carry-over from an expired window (no false rejections right after a window ends)
+- fix: the triggering counter is reset when an ip is jailed (no immediate re-jail on release)
+- fix: templates declared as `@external_resource`
+- fix: request path protections match the path as the Phoenix router sees it (empty segments, percent-encoding) — thanks @milanalexandre (#6)
+
 ## 1.1.19
 
 - fix: phoenix router instropection too slow on big projects
