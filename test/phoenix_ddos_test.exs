@@ -3,7 +3,7 @@ defmodule PhoenixDDoSTest do
   All ddos test can't be run async
   """
 
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   use Plug.Test
 
   doctest PhoenixDDoS
