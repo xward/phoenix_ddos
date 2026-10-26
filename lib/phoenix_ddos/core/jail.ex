@@ -20,15 +20,11 @@ defmodule PhoenixDDoS.Jail do
   alias PhoenixDDoS.Time
 
   def send(ip, {_module, cfg} = prot) do
-    # Cachex 3 reads only :ttl, Cachex 4 reads only :expire: pass both so entries expire on either.
     jail_ms = Time.period_to_msec(cfg.jail_time)
-    {:ok, _} = Cachex.put(:phoenix_ddos_jail, ip, true, ttl: jail_ms, expire: jail_ms)
+    {:ok, _} = Cachex.put(:phoenix_ddos_jail, ip, true, expire: jail_ms)
 
     {:ok, _} =
-      Cachex.put(:phoenix_ddos_suspicious_ips, ip, true,
-        ttl: :timer.hours(6),
-        expire: :timer.hours(6)
-      )
+      Cachex.put(:phoenix_ddos_suspicious_ips, ip, true, expire: :timer.hours(6))
 
     Telemetry.push([:jail, :new], %{}, %{ip: ip, protection: prot})
 

@@ -69,7 +69,7 @@ defmodule PhoenixDDoS.MixProject do
   defp deps do
     [
       {:plug, "~> 1.14"},
-      {:cachex, ">= 3.0.0"},
+      {:cachex, "~> 4.0"},
       {:telemetry, ">= 0.0.0"},
       {:phoenix, ">= 1.5.0", runtime: false},
       {:dialyxir, "~> 1.0", only: [:test, :dev], runtime: false},
