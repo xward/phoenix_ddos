@@ -70,21 +70,22 @@ High performance application-layer DDoS protection for Elixir Phoenix.
 ```elixir
 def deps do
   [
-    {:phoenix_ddos, "~> 1.1"},
-    # Highly recommended, this will makes sure we get the correct remote_ip
+    {:phoenix_ddos, "~> 1.2"},
+    # Needed behind a reverse proxy, to get the correct remote_ip
     {:remote_ip, "~> 1.1"}
   ]
 end
 ```
 
-2. Add the `PhoenixDDoS` plug to your app's Endpoint, after the excellent [RemoteIp][remote_ip_github] plug (optional but highly recommended !).
+2. Add the `PhoenixDDoS` plug to your app's Endpoint, after the excellent [RemoteIp][remote_ip_github] plug when you run behind a reverse proxy.
 
 ```elixir
 defmodule MyApp.Endpoint do
   use Phoenix.Endpoint, otp_app: :my_app
 
   # put as high in the order as possible
-  plug RemoteIp, headers: ["x-forwarded-for"]
+  # only when behind a reverse proxy you control: list its addresses in `proxies:`
+  plug RemoteIp, headers: ["x-forwarded-for"], proxies: ["10.0.0.1"]
   plug PhoenixDDoS
 
   # ...
@@ -92,12 +93,38 @@ defmodule MyApp.Endpoint do
 end
 ```
 
+Forwarding headers such as `x-forwarded-for` must only be read when the app is behind a reverse proxy you control, and the addresses of that proxy must be listed in `proxies:`. When the app is exposed directly, do not add `RemoteIp`: `conn.remote_ip` is used as is.
+
+### Sockets
+
+`socket` declarations are handled by Phoenix before the endpoint plugs, so they are not checked by the `PhoenixDDoS` plug. Use `PhoenixDDoS.check_ip/1` in the socket's `connect/3`, with the client ip. When the app is exposed directly, it is `connect_info.peer_data.address`:
+
+```elixir
+# endpoint: socket "/socket", MyApp.UserSocket, websocket: [connect_info: [:peer_data, :x_headers]]
+def connect(_params, socket, connect_info) do
+  ip = connect_info.peer_data.address
+
+  case PhoenixDDoS.check_ip(ip) do
+    :ok -> {:ok, socket}
+    :error -> :error
+  end
+end
+```
+
+Behind a trusted reverse proxy, derive the ip from `connect_info.x_headers` with `RemoteIp.from/2`, configured with the addresses of your proxies:
+
+```elixir
+ip = RemoteIp.from(connect_info.x_headers, headers: ["x-forwarded-for"], proxies: ["10.0.0.1"])
+```
+
+A jail triggered from `check_ip/1` is logged but sends no Sentry alert.
+
 ## Configuration
 
 ```elixir
 config :phoenix_ddos,
-  safelist_ips: ["1.2.3.4", "5.6.7.0"],
-  blocklist_ips: ["11.12.13.0"],
+  safelist_ips: ["1.2.3.4", "5.6.7.8"],
+  blocklist_ips: ["11.12.13.14"],
   protections: [
     # ip rate limit
     {PhoenixDDoS.IpRateLimit, allowed: 500, period: {2, :minutes}},
@@ -117,9 +144,15 @@ config :phoenix_ddos,
 | bool | `raise_on_reject`         | false         | raise when we reject a connexion instead of returning an http code error                        |
 | int  | `http_code_on_reject`     | 429           | http code returned when we reject a connexion                                                   |
 | list | `protections`             | []            | @see [Protections examples][protection_examples]                                                |
-| list | `safelist_ips`            | []            | bypass all protections ips                                                                      |
-| list | `blocklist_ips`           | []            | always blocked ips                                                                              |
+| list | `safelist_ips`            | []            | bypass all protections ips (exact addresses, no CIDR ranges)                                    |
+| list | `blocklist_ips`           | []            | always blocked ips (exact addresses, no CIDR ranges)                                            |
 | bool | `on_jail_alert_to_sentry` | false         | notify slack when an ip get jailed                                                              |
+| int  | `ipv6_prefix`             | 64            | IPv6 clients are tracked per prefix of this length; list entries cover their whole prefix       |
+| int  | `max_entries`             | 1_000_000     | maximum entries of the rate-limit store                                                         |
+| int  | `max_jail_entries`        | 100_000       | maximum entries of the jail and suspicious ips stores                                           |
+| int  | `max_jail_alerts_per_minute` | 10         | cap on jail log lines and Sentry alerts per minute                                              |
+
+Safelist and blocklist entries are exact addresses. An IPv6 entry covers its whole `ipv6_prefix` (/64 by default), and an IPv4-mapped IPv6 client matches the IPv4 entries. An invalid entry raises at startup.
 
 
 [protection_examples]: #examples-with-protection-phoenixddosipratelimit
