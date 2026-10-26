@@ -164,25 +164,25 @@ defmodule PhoenixDDoS.Configure do
 
   defp default_jail_time, do: Application.get_env(:phoenix_ddos, :jail_time, {15, :minutes})
 
-  # transform "/admin/:id/dashboard" to "_, "admin", _, "dashboard""
-  # transform {:get, "/admin/:id/dashboard"} to ""GET", "admin", _, "dashboard""
-  # empty segments are dropped, like the engine does on the request path
+  # transform "/admin/:id/dashboard" to `_, "admin", _, "dashboard"`
+  # transform {:get, "/admin/:id/dashboard"} to `"GET", "admin", _, "dashboard"`
+  # Empty segments are dropped: patterns are matched against the normalized
+  # segments built by `PhoenixDDoS.Engine.match_segments/1`.
   @http_methods [:get, :post, :delete, :head, :put, :patch, :options]
   defp path_to_pattern_match_chunk({method, path}) when method in @http_methods do
-    path_to_pattern_match_chunk(path, String.upcase("\"#{method}\""))
+    path_to_pattern_match_chunk(path, inspect(method |> Atom.to_string() |> String.upcase()))
   end
 
   defp path_to_pattern_match_chunk({method, _path}), do: raise("unknown method #{method}")
 
   defp path_to_pattern_match_chunk(path, method \\ "_") do
-    chunks =
-      for chunk <- String.split(path, "/"), chunk != "" do
-        case chunk do
-          <<":", _rest::binary>> -> "_"
-          chunk -> "\"#{chunk}\""
-        end
-      end
-
-    Enum.join([method | chunks], ", ")
+    [
+      method
+      | path |> String.split("/") |> Enum.reject(&(&1 == "")) |> Enum.map(&segment_pattern/1)
+    ]
+    |> Enum.join(", ")
   end
+
+  defp segment_pattern(<<":", _rest::binary>>), do: "_"
+  defp segment_pattern(chunk), do: inspect(chunk)
 end

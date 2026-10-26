@@ -38,6 +38,28 @@ defmodule PhoenixDDoS.Engine do
 
   require Logger
 
+  <% # method + decoded path_info segments, as Phoenix.Router matches them.
+     # HEAD is routed as GET. %>
+  def match_segments(conn) do
+    method =
+      case conn.method do
+        "HEAD" -> "GET"
+        method -> method
+      end
+
+    [method | Enum.map(conn.path_info, &URI.decode/1)]
+  end
+
+  <% # Plug.MethodOverride runs after this plug: a POST may become PUT/PATCH/DELETE %>
+  defp request_checkers(ip, ["POST" | path] = segments) do
+    ["PUT", "PATCH", "DELETE"]
+    |> Enum.flat_map(&Checkers.checkers(ip, [&1 | path]))
+    |> Kernel.++(Checkers.checkers(ip, segments))
+    |> Enum.uniq_by(&elem(&1, 0))
+  end
+
+  defp request_checkers(ip, segments), do: Checkers.checkers(ip, segments)
+
   <% # returns {decision, prot_that_decide_it} %>
   def control(conn) do
     PhoenixDDoS.RequestContext.feed(conn)
@@ -65,7 +87,7 @@ defmodule PhoenixDDoS.Engine do
         decisions =
 <%= if request_path_registers != [] do %>
         ip
-        |> Checkers.checkers([conn.method | path_segments(conn.request_path)])
+        |> request_checkers(match_segments(conn))
 <% else %>
         ip
         |> Checkers.checkers()
@@ -107,22 +129,6 @@ defmodule PhoenixDDoS.Engine do
       end
   end
 
-<%= if request_path_registers != [] do %>
-  <% # segments as the phoenix router sees them: empty ones dropped and percent-decoded. Else
-     # "//admin", "/admin/" or "/%61dmin", all routed to /admin, would escape its quota %>
-  defp path_segments(request_path) do
-    for segment <- :binary.split(request_path, "/", [:global]), segment != "" do
-      decode_segment(segment)
-    end
-  end
-
-  <% # a malformed escape is never routed by phoenix: keep it as is, it matches no protected path %>
-  defp decode_segment(segment) do
-    URI.decode(segment)
-  rescue
-    ArgumentError -> segment
-  end
-<% end %>
 
 <%= for {prot, cfg} <- Application.get_env(:phoenix_ddos,:_prots) do %>
   def get_prot_cfg("<%= cfg.id %>"), do: {<%= prot %>, <%= inspect(cfg) %>}

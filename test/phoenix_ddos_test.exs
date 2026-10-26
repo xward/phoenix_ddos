@@ -126,13 +126,13 @@ defmodule PhoenixDDoSTest do
       ]
       |> put_protections()
 
-      run_ddos(conn(%{request_path: "/admin/23/dashboard"}), assert_fail_after_request: 3)
+      run_ddos(path_conn("/admin/23/dashboard"), assert_fail_after_request: 3)
 
-      run_ddos(conn(%{request_path: "/admin", method: "POST"}), assert_fail_after_request: 3)
+      run_ddos(path_conn("/admin", "POST"), assert_fail_after_request: 3)
 
-      run_ddos(conn(%{request_path: "/admin"}), :never_fail)
+      run_ddos(path_conn("/admin"), :never_fail)
 
-      run_ddos(conn(%{request_path: "/user"}), :never_fail)
+      run_ddos(path_conn("/user"), :never_fail)
     end
 
     test "IpRateLimitPerRequestPath counts every spelling the router serves as the same path" do
@@ -146,14 +146,14 @@ defmodule PhoenixDDoSTest do
       |> put_protections()
 
       # all routed by phoenix to /admin: they must share its quota
-      ["/admin", "//admin", "/admin/"] |> Enum.each(&(conn(%{request_path: &1}) |> call()))
-      run_ddos(conn(%{request_path: "/%61dmin"}), :always_fail)
+      ["/admin", "//admin", "/admin/"] |> Enum.each(&(path_conn(&1) |> call()))
+      run_ddos(path_conn("/%61dmin"), :always_fail)
 
-      run_ddos(conn(%{request_path: "/admin//23/dashboard"}), assert_fail_after_request: 3)
-      run_ddos(conn(%{request_path: "/admin/23/dashboard/"}), :always_fail)
+      run_ddos(path_conn("/admin//23/dashboard"), assert_fail_after_request: 3)
+      run_ddos(path_conn("/admin/23/dashboard/"), :always_fail)
 
-      run_ddos(conn(%{request_path: "/user"}), :never_fail)
-      run_ddos(conn(%{request_path: "/admin%zz"}), :never_fail)
+      run_ddos(path_conn("/user"), :never_fail)
+      run_ddos(path_conn("/admin%zz"), :never_fail)
     end
 
     test "IpRateLimitPerRequestPath shared quota along all paths" do
@@ -167,9 +167,9 @@ defmodule PhoenixDDoSTest do
       ]
       |> put_protections()
 
-      run_ddos(conn(%{request_path: "/admin"}), assert_fail_after_request: 3)
+      run_ddos(path_conn("/admin"), assert_fail_after_request: 3)
 
-      run_ddos(conn(%{request_path: "/user"}), :always_fail)
+      run_ddos(path_conn("/user"), :always_fail)
     end
 
     # --------------------------------------------------------------
@@ -177,7 +177,7 @@ defmodule PhoenixDDoSTest do
     # --------------------------------------------------------------
 
     test "Telemetry context data" do
-      conn = conn(%{request_path: "/admin/521/dashboard"})
+      conn = path_conn("/admin/521/dashboard")
       conn |> call()
 
       assert_receive {:telemetry_event, [:phoenix_ddos, :request, :new], %{},
@@ -190,7 +190,7 @@ defmodule PhoenixDDoSTest do
     end
 
     test "Telemetry context no route found" do
-      conn = conn(%{request_path: "/notfound"})
+      conn = path_conn("/notfound")
       conn |> call()
 
       assert_receive {:telemetry_event, [:phoenix_ddos, :request, :new], %{},
@@ -259,5 +259,13 @@ defmodule PhoenixDDoSTest do
 
   defp conn(attr \\ %{}) do
     conn(:get, "/") |> Map.put(:remote_ip, @an_ip) |> Map.merge(attr)
+  end
+
+  # the engine matches on path_info, like Phoenix.Router
+  defp path_conn(path, method \\ "GET") do
+    %{
+      conn(%{request_path: path, method: method})
+      | path_info: for(s <- String.split(path, "/"), s != "", do: s)
+    }
   end
 end
