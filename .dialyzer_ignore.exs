@@ -16,7 +16,5 @@
   {"test/support/router.ex", "Function Phoenix.VerifiedRoutes.unverified_path/3 does not exist."},
   {"test/support/router.ex", "Function Phoenix.VerifiedRoutes.unverified_url/2 does not exist."},
   {"lib/phoenix_ddos/core/request_context.ex", :unknown_function},
-  # PhoenixDDoS.Engine is generated at runtime from lib/phoenix_ddos/template/engine.eex
-  {"lib/phoenix_ddos.ex", :call_to_missing},
   {"deps/phoenix/lib/phoenix/router.ex", :pattern_match}
 ]
