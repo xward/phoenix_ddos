@@ -11,16 +11,16 @@ defmodule PhoenixDDoS.IP do
   @default_prefix 64
 
   @spec key(:inet.ip_address()) :: charlist
-  def key({_, _, _, _} = ip), do: :inet.ntoa(ip)
+  def key({_, _, _, _} = ip), do: ntoa(ip)
 
   def key({0, 0, 0, 0, 0, 0xFFFF, hi, lo}) do
-    :inet.ntoa({hi >>> 8, hi &&& 0xFF, lo >>> 8, lo &&& 0xFF})
+    ntoa({hi >>> 8, hi &&& 0xFF, lo >>> 8, lo &&& 0xFF})
   end
 
   def key({_, _, _, _, _, _, _, _} = ip) do
     prefix = prefix()
     network = ip |> to_integer() |> band(mask(prefix)) |> from_integer()
-    :inet.ntoa(network) ++ ~c"/" ++ Integer.to_charlist(prefix)
+    ntoa(network) ++ ~c"/" ++ Integer.to_charlist(prefix)
   end
 
   @spec normalize!(String.t() | charlist) :: charlist
@@ -30,6 +30,13 @@ defmodule PhoenixDDoS.IP do
     case :inet.parse_address(ip) do
       {:ok, address} -> key(address)
       {:error, _} -> raise ArgumentError, "invalid IP address: #{inspect(to_string(ip))}"
+    end
+  end
+
+  defp ntoa(ip) do
+    case :inet.ntoa(ip) do
+      {:error, _} -> raise ArgumentError, "invalid IP address: #{inspect(ip)}"
+      chars -> chars
     end
   end
 
