@@ -5,7 +5,7 @@ defmodule PhoenixDDoS.RequestContext do
 
   def feed(%Plug.Conn{} = conn) do
     Process.put(:phoenix_ddos, %{
-      ip: conn.remote_ip |> :inet.ntoa(),
+      ip: PhoenixDDoS.IP.key(conn.remote_ip),
       method: conn.method,
       request_path: conn.request_path,
       route: phoenix_route(conn)

@@ -107,10 +107,7 @@ defmodule PhoenixDDoS.Configure do
       :phoenix_ddos,
       key,
       Application.get_env(:phoenix_ddos, key, [])
-      |> Enum.map(fn
-        ip when is_list(ip) -> ip
-        ip when is_binary(ip) -> String.to_charlist(ip)
-      end)
+      |> Enum.map(&PhoenixDDoS.IP.normalize!/1)
     )
   end
 
