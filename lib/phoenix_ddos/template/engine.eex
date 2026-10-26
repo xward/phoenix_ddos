@@ -47,7 +47,15 @@ defmodule PhoenixDDoS.Engine do
         method -> method
       end
 
-    [method | Enum.map(conn.path_info, &URI.decode/1)]
+    [method | Enum.map(conn.path_info, &decode_segment/1)]
+  end
+
+  <% # only segments containing "%" need decoding %>
+  defp decode_segment(segment) do
+    case :binary.match(segment, "%") do
+      :nomatch -> segment
+      _ -> URI.decode(segment)
+    end
   end
 
   <% # Plug.MethodOverride runs after this plug: a POST may become PUT/PATCH/DELETE %>
