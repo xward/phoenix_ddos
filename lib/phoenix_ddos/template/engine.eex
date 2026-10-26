@@ -75,7 +75,7 @@ defmodule PhoenixDDoS.Engine do
 
         cond do
           decisions[:jail] ->
-            {jail_id, _window_key} = decisions[:jail]
+            {jail_id, window_key} = decisions[:jail]
             prot = get_prot_cfg(jail_id)
 
             Logger.warning(
@@ -83,6 +83,7 @@ defmodule PhoenixDDoS.Engine do
             )
 
             Jail.send(ip, prot)
+            Cachex.del(:phoenix_ddos_store, window_key)
 
 <%= if Application.get_env(:phoenix_ddos, :on_jail_alert_to_sentry) do %>
             PhoenixDDoS.Monitoring.AlertSentry.alert_goes_to_jail(prot)

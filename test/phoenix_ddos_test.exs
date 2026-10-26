@@ -217,6 +217,23 @@ defmodule PhoenixDDoSTest do
       assert_receive {:telemetry_event, [:phoenix_ddos, :request, :new], %{}, %{decision: :block}}
     end
 
+    test "ip released from jail gets a fresh quota" do
+      [
+        {PhoenixDDoS.IpRateLimit, allowed: 3, period: {1, :hour}, jail_time: {1, :second}}
+      ]
+      |> put_protections()
+
+      1..3 |> Enum.each(fn _ -> conn() |> call() |> assert_allowed() end)
+      conn() |> call() |> assert_rejected()
+      assert_in_jail(@an_ip)
+
+      Process.sleep(1_100)
+      Cachex.purge(:phoenix_ddos_jail)
+      assert_not_in_jail(@an_ip)
+
+      conn() |> call() |> assert_allowed()
+    end
+
     test "Telemetry [:phoenix_ddos, :request, :new] :jail" do
       [
         {PhoenixDDoS.IpRateLimit, allowed: 0, period: {2, :second}}
