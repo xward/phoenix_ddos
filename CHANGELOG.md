@@ -9,6 +9,8 @@
 - IPv4-mapped IPv6 clients match IPv4 safelist/blocklist entries
 - invalid safelist/blocklist entries raise at startup
 - requires `cachex ~> 4.0` and Elixir ~> 1.13
+- `Jail.in_jail?/1`, `Jail.bail_out/1` and `Jail.suspicious_ip?/1` look up the client key of the given address (IPv6 → its prefix, IPv4-mapped → IPv4) and also accept tuples; prefix keys as listed by `Jail.ips_in_jail/0` still work
+- `{:head, path}` rules also count GET requests to the path (HEAD is served by GET routes and counted as GET)
 
 ### Features and fixes
 

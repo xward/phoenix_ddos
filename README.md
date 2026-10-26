@@ -114,7 +114,10 @@ end
 Behind a trusted reverse proxy, derive the ip from `connect_info.x_headers` with `RemoteIp.from/2`, configured with the addresses of your proxies:
 
 ```elixir
-ip = RemoteIp.from(connect_info.x_headers, headers: ["x-forwarded-for"], proxies: ["10.0.0.1"])
+# RemoteIp.from/2 returns nil when no forwarding header is present
+ip =
+  RemoteIp.from(connect_info.x_headers, headers: ["x-forwarded-for"], proxies: ["10.0.0.1"]) ||
+    connect_info.peer_data.address
 ```
 
 A jail triggered from `check_ip/1` is logged but sends no Sentry alert.
@@ -146,10 +149,10 @@ config :phoenix_ddos,
 | list | `protections`             | []            | @see [Protections examples][protection_examples]                                                |
 | list | `safelist_ips`            | []            | bypass all protections ips (exact addresses, no CIDR ranges)                                    |
 | list | `blocklist_ips`           | []            | always blocked ips (exact addresses, no CIDR ranges)                                            |
-| bool | `on_jail_alert_to_sentry` | false         | notify slack when an ip get jailed                                                              |
+| bool | `on_jail_alert_to_sentry` | false         | notify Sentry when an ip get jailed                                                             |
 | int  | `ipv6_prefix`             | 64            | IPv6 clients are tracked per prefix of this length; list entries cover their whole prefix       |
 | int  | `max_entries`             | 1_000_000     | maximum entries of the rate-limit store                                                         |
-| int  | `max_jail_entries`        | 100_000       | maximum entries of the jail and suspicious ips stores                                           |
+| int  | `max_jail_entries`        | 100_000       | maximum entries of the jail and suspicious ips stores; when exceeded, the oldest jail entries are dropped early (released before their `jail_time`) |
 | int  | `max_jail_alerts_per_minute` | 10         | cap on jail log lines and Sentry alerts per minute                                              |
 
 Safelist and blocklist entries are exact addresses. An IPv6 entry covers its whole `ipv6_prefix` (/64 by default), and an IPv4-mapped IPv6 client matches the IPv4 entries. An invalid entry raises at startup.
@@ -172,6 +175,8 @@ Safelist and blocklist entries are exact addresses. An IPv6 entry covers its who
 ```
 
 ### Examples with protection `PhoenixDDoS.IpRateLimitPerRequestPath`
+
+Paths are matched like the Phoenix router does: a HEAD request counts as GET (and a `{:head, path}` rule counts GET requests too), and a POST also counts toward PUT/PATCH/DELETE rules on the same path, since `Plug.MethodOverride` may turn it into one of those.
 
 1. single route /graphql with a 20 per minute max, if triggered ip will be in jail for 15 minutes
 ```elixir
