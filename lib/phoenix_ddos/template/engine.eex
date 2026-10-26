@@ -75,7 +75,8 @@ defmodule PhoenixDDoS.Engine do
 
         cond do
           decisions[:jail] ->
-            prot = get_prot_cfg(decisions[:jail])
+            {jail_id, _window_key} = decisions[:jail]
+            prot = get_prot_cfg(jail_id)
 
             Logger.warning(
               "🛡️ PhoenixDDoS: ip[#{ip}] goes to JAIL. From prot #{inspect(prot)} with love"
