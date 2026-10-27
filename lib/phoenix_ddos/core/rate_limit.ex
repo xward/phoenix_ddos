@@ -20,7 +20,8 @@ defmodule PhoenixDDoS.RateLimit do
 
       # IO.puts("#{key} #{n}/#{allowed}")
 
-      Map.put(acc, (n > allowed && decision_if_above) || :pass, id)
+      # the key lets the engine reset the counter of an ip it jails
+      Map.put(acc, (n > allowed && decision_if_above) || :pass, {id, key})
     end)
   end
 end

@@ -32,95 +32,130 @@ defmodule PhoenixDDoS.Engine do
   alias PhoenixDDoS.Checkers
   alias PhoenixDDoS.Dredd
   alias PhoenixDDoS.Jail
+  alias PhoenixDDoS.Monitoring.AlertThrottle
   alias PhoenixDDoS.RateLimit
   alias PhoenixDDoS.RequestContext
   alias PhoenixDDoS.Telemetry
 
   require Logger
 
-  <% # returns {decision, prot_that_decide_it} %>
-  def control(conn) do
-    PhoenixDDoS.RequestContext.feed(conn)
-
-    ip = RequestContext.get(:ip)
-
-    cond do
-<%= if Application.get_env(:phoenix_ddos, :blocklist_ips, []) != [] do %>
-      blocklist_ips?(ip) ->
-        Telemetry.push_request_new(:block)
-
-        Dredd.reject(conn)
-<% end %>
-<%= if Application.get_env(:phoenix_ddos, :safelist_ips, []) != [] do %>
-      safelist_ips?(ip) ->
-        Telemetry.push_request_new(:pass)
-
-        conn
-<% end %>
-
-      Jail.in_jail?(ip) ->
-        Dredd.reject(conn)
-
-      true ->
-        decisions =
-<%= if request_path_registers != [] do %>
-        ip
-        |> Checkers.checkers([conn.method | path_segments(conn.request_path)])
-<% else %>
-        ip
-        |> Checkers.checkers()
-<% end %>
-        # |> IO.inspect()
-        |> RateLimit.batch_check()
-
-        cond do
-          decisions[:jail] ->
-            prot = get_prot_cfg(decisions[:jail])
-
-            Logger.warning(
-              "🛡️ PhoenixDDoS: ip[#{ip}] goes to JAIL. From prot #{inspect(prot)} with love"
-            )
-
-            Jail.send(ip, prot)
-
-<%= if Application.get_env(:phoenix_ddos, :on_jail_alert_to_sentry) do %>
-            PhoenixDDoS.Monitoring.AlertSentry.alert_goes_to_jail(prot)
-<% end %>
-
-            Telemetry.push_request_new(:jail)
-
-            Dredd.reject(conn)
-
-          decisions[:block] ->
-            Telemetry.push_request_new(:block)
-
-            <% # for now we don't log block since it could cause log overload %>
-            Dredd.reject(conn)
-
-          true ->
-            Telemetry.push_request_new(:pass)
-
-            conn
-        end
+  <% # method + decoded path_info segments, as Phoenix.Router matches them.
+     # HEAD is routed as GET. %>
+  defp match_segments(conn) do
+    method =
+      case conn.method do
+        "HEAD" -> "GET"
+        method -> method
       end
+
+    [method | Enum.map(conn.path_info, &decode_segment/1)]
   end
 
-<%= if request_path_registers != [] do %>
-  <% # segments as the phoenix router sees them: empty ones dropped and percent-decoded. Else
-     # "//admin", "/admin/" or "/%61dmin", all routed to /admin, would escape its quota %>
-  defp path_segments(request_path) do
-    for segment <- :binary.split(request_path, "/", [:global]), segment != "" do
-      decode_segment(segment)
+  <% # only segments containing "%" need decoding %>
+  defp decode_segment(segment) do
+    case :binary.match(segment, "%") do
+      :nomatch -> segment
+      _ -> URI.decode(segment)
     end
   end
 
-  <% # a malformed escape is never routed by phoenix: keep it as is, it matches no protected path %>
-  defp decode_segment(segment) do
-    URI.decode(segment)
-  rescue
-    ArgumentError -> segment
+<%= if request_path_registers != [] do %>
+  <% # Plug.MethodOverride runs after this plug: a POST may become PUT/PATCH/DELETE %>
+  defp request_checkers(ip, ["POST" | path] = segments) do
+    ["PUT", "PATCH", "DELETE"]
+    |> Enum.flat_map(&Checkers.checkers(ip, [&1 | path]))
+    |> Kernel.++(Checkers.checkers(ip, segments))
+    |> Enum.uniq_by(&elem(&1, 0))
   end
+
+  defp request_checkers(ip, segments), do: Checkers.checkers(ip, segments)
+<% else %>
+  defp request_checkers(ip, _segments), do: Checkers.checkers(ip)
 <% end %>
+
+  def control(conn) do
+    PhoenixDDoS.RequestContext.feed(conn)
+
+    case evaluate(RequestContext.get(:ip), match_segments(conn)) do
+      <% # already in jail: rejected without telemetry %>
+      :jailed ->
+        Dredd.reject(conn)
+
+      :pass ->
+        Telemetry.push_request_new(:pass)
+        conn
+
+      decision ->
+        Telemetry.push_request_new(decision)
+        Dredd.reject(conn)
+    end
+  end
+
+  <% # sockets (PhoenixDDoS.check_socket_ip/1): global ip rules only, nothing to reject %>
+  def control_socket(address) do
+    ip = PhoenixDDoS.IP.key(address)
+    RequestContext.feed_ip(ip)
+
+    case evaluate(ip, []) do
+      :pass -> :ok
+      _ -> :error
+    end
+  end
+
+  <% # opinion on a client key (see PhoenixDDoS.IP.key/1) requesting
+     # [method | path segments]; the control functions act on it %>
+  defp evaluate(ip, segments) do
+    cond do
+<%= if Application.get_env(:phoenix_ddos, :blocklist_ips, []) != [] do %>
+      blocklist_ips?(ip) ->
+        :block
+<% end %>
+<%= if Application.get_env(:phoenix_ddos, :safelist_ips, []) != [] do %>
+      safelist_ips?(ip) ->
+        :pass
+<% end %>
+
+      Jail.jailed?(ip) ->
+        :jailed
+
+      true ->
+        decisions =
+          ip
+          |> request_checkers(segments)
+          |> RateLimit.batch_check()
+
+        cond do
+          decisions[:jail] ->
+            {jail_id, counter_key} = decisions[:jail]
+            prot = get_prot_cfg(jail_id)
+
+            alert? = AlertThrottle.allow?()
+
+            if alert? do
+              Logger.warning(
+                "🛡️ PhoenixDDoS: ip[#{ip}] goes to JAIL. From prot #{inspect(prot)} with love"
+              )
+            end
+
+            Jail.send(ip, prot)
+            <% # else, with a jail shorter than the period, the ip is jailed again on release %>
+            Cachex.del(:phoenix_ddos_store, counter_key)
+
+<%= if Application.get_env(:phoenix_ddos, :on_jail_alert_to_sentry) do %>
+            if alert?, do: PhoenixDDoS.Monitoring.AlertSentry.alert_goes_to_jail(prot)
+<% end %>
+
+            :jail
+
+          decisions[:block] ->
+            <% # for now we don't log block since it could cause log overload %>
+            :block
+
+          true ->
+            :pass
+        end
+    end
+  end
 
 <%= for {prot, cfg} <- Application.get_env(:phoenix_ddos,:_prots) do %>
   def get_prot_cfg("<%= cfg.id %>"), do: {<%= prot %>, <%= inspect(cfg) %>}

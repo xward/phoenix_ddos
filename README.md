@@ -70,21 +70,22 @@ High performance application-layer DDoS protection for Elixir Phoenix.
 ```elixir
 def deps do
   [
-    {:phoenix_ddos, "~> 1.1"},
-    # Highly recommended, this will makes sure we get the correct remote_ip
+    {:phoenix_ddos, "~> 1.2"},
+    # Needed behind a reverse proxy, to get the correct remote_ip
     {:remote_ip, "~> 1.1"}
   ]
 end
 ```
 
-2. Add the `PhoenixDDoS` plug to your app's Endpoint, after the excellent [RemoteIp][remote_ip_github] plug (optional but highly recommended !).
+2. Add the `PhoenixDDoS` plug to your app's Endpoint, after the excellent [RemoteIp][remote_ip_github] plug when you run behind a reverse proxy.
 
 ```elixir
 defmodule MyApp.Endpoint do
   use Phoenix.Endpoint, otp_app: :my_app
 
   # put as high in the order as possible
-  plug RemoteIp, headers: ["x-forwarded-for"]
+  # only when behind a reverse proxy you control: list its addresses in `proxies:`
+  plug RemoteIp, headers: ["x-forwarded-for"], proxies: ["10.0.0.1"]
   plug PhoenixDDoS
 
   # ...
@@ -92,12 +93,55 @@ defmodule MyApp.Endpoint do
 end
 ```
 
+Forwarding headers such as `x-forwarded-for` must only be read when the app is behind a reverse proxy you control, and the addresses of that proxy must be listed in `proxies:`. When the app is exposed directly, do not add `RemoteIp`: `conn.remote_ip` is used as is.
+
+### Sockets
+
+`socket` declarations (channels, LiveView) are handled by Phoenix before the endpoint plugs, so they are not checked by the `PhoenixDDoS` plug. Use `PhoenixDDoS.check_socket_ip/1` with the client ip.
+
+The client ip is found the same way as for `RemoteIp` in the endpoint. Behind a reverse proxy, `peer_data` is the address of the proxy: checking it would jail the proxy, and every user with it. Use `peer_data` alone only when the app is exposed directly.
+
+```elixir
+# endpoint: websocket: [connect_info: [:peer_data, :x_headers, ...]]
+defp client_ip(x_headers, peer_data) do
+  # RemoteIp.from/2 returns nil when no forwarding header is present
+  RemoteIp.from(x_headers, headers: ["x-forwarded-for"], proxies: ["10.0.0.1"]) ||
+    peer_data.address
+end
+```
+
+Channels, in the socket's `connect/3`:
+
+```elixir
+def connect(_params, socket, connect_info) do
+  case PhoenixDDoS.check_socket_ip(client_ip(connect_info.x_headers, connect_info.peer_data)) do
+    :ok -> {:ok, socket}
+    :error -> :error
+  end
+end
+```
+
+LiveView, in an `on_mount` hook of the `live_session`:
+
+```elixir
+def on_mount(:default, _params, _session, socket) do
+  with true <- connected?(socket),
+       ip = client_ip(get_connect_info(socket, :x_headers) || [], get_connect_info(socket, :peer_data)),
+       :error <- PhoenixDDoS.check_socket_ip(ip) do
+    # the redirected http request goes through the PhoenixDDoS plug
+    {:halt, redirect(socket, to: "/")}
+  else
+    _ -> {:cont, socket}
+  end
+end
+```
+
 ## Configuration
 
 ```elixir
 config :phoenix_ddos,
-  safelist_ips: ["1.2.3.4", "5.6.7.0"],
-  blocklist_ips: ["11.12.13.0"],
+  safelist_ips: ["1.2.3.4", "5.6.7.8"],
+  blocklist_ips: ["11.12.13.14"],
   protections: [
     # ip rate limit
     {PhoenixDDoS.IpRateLimit, allowed: 500, period: {2, :minutes}},
@@ -117,9 +161,15 @@ config :phoenix_ddos,
 | bool | `raise_on_reject`         | false         | raise when we reject a connexion instead of returning an http code error                        |
 | int  | `http_code_on_reject`     | 429           | http code returned when we reject a connexion                                                   |
 | list | `protections`             | []            | @see [Protections examples][protection_examples]                                                |
-| list | `safelist_ips`            | []            | bypass all protections ips                                                                      |
-| list | `blocklist_ips`           | []            | always blocked ips                                                                              |
-| bool | `on_jail_alert_to_sentry` | false         | notify slack when an ip get jailed                                                              |
+| list | `safelist_ips`            | []            | bypass all protections ips (exact addresses, no CIDR ranges)                                    |
+| list | `blocklist_ips`           | []            | always blocked ips (exact addresses, no CIDR ranges)                                            |
+| bool | `on_jail_alert_to_sentry` | false         | notify Sentry when an ip get jailed                                                             |
+| int  | `ipv6_prefix`             | 64            | IPv6 clients are tracked per prefix of this length; list entries cover their whole prefix       |
+| int  | `max_entries`             | 1_000_000     | maximum entries of the rate-limit store                                                         |
+| int  | `max_jail_entries`        | 100_000       | maximum entries of the jail and suspicious ips stores; when exceeded, the oldest jail entries are dropped early (released before their `jail_time`) |
+| int  | `max_jail_alerts_per_minute` | 10         | cap on jail log lines and Sentry alerts per minute                                              |
+
+Safelist and blocklist entries are exact addresses. An IPv6 entry covers its whole `ipv6_prefix` (/64 by default), and an IPv4-mapped IPv6 client matches the IPv4 entries. IPv6 keys as reported by jail telemetry (`"2001:db8::/64"`) are accepted, IPv4 ranges are not. An invalid entry is logged and ignored.
 
 
 [protection_examples]: #examples-with-protection-phoenixddosipratelimit
@@ -139,6 +189,8 @@ config :phoenix_ddos,
 ```
 
 ### Examples with protection `PhoenixDDoS.IpRateLimitPerRequestPath`
+
+Paths are matched like the Phoenix router does: a HEAD request counts as GET (and a `{:head, path}` rule counts GET requests too), and a POST also counts toward PUT/PATCH/DELETE rules on the same path, since `Plug.MethodOverride` may turn it into one of those.
 
 1. single route /graphql with a 20 per minute max, if triggered ip will be in jail for 15 minutes
 ```elixir

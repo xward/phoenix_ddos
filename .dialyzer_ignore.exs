@@ -16,5 +16,8 @@
   {"test/support/router.ex", "Function Phoenix.VerifiedRoutes.unverified_path/3 does not exist."},
   {"test/support/router.ex", "Function Phoenix.VerifiedRoutes.unverified_url/2 does not exist."},
   {"lib/phoenix_ddos/core/request_context.ex", :unknown_function},
-  {"deps/phoenix/lib/phoenix/router.ex", :pattern_match}
+  {"deps/phoenix/lib/phoenix/router.ex", :pattern_match},
+  # PhoenixDDoS.Engine.control_socket/1 is a compile-time stub (always :ok),
+  # replaced at runtime by the engine generated from engine.eex
+  {"lib/phoenix_ddos.ex", :extra_range}
 ]

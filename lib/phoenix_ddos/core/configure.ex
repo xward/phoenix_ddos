@@ -13,7 +13,12 @@ defmodule PhoenixDDoS.Configure do
     PhoenixDDoS.IpRateLimitPerRequestPath
   ]
 
-  def configure do
+  # apps reconfigure at runtime, possibly from several processes at once (e.g.
+  # telemetry handlers banning ips): one at a time, as the engine modules can't
+  # be defined twice concurrently
+  def configure, do: :global.trans({__MODULE__, self()}, &do_configure/0, [node()])
+
+  defp do_configure do
     # validate some configuration provided by user
     validate!()
 
@@ -35,11 +40,19 @@ defmodule PhoenixDDoS.Configure do
         |> List.flatten()
       end)
       |> List.flatten()
+      # id from the config, not random: counters (keyed by id) survive a
+      # reconfigure, a request in flight keeps valid ids, and a changed
+      # protection starts fresh. A protection listed twice would share its id.
+      |> Enum.uniq()
+      |> Enum.map(fn {prot, cfg} ->
+        {prot, Map.put(cfg, :id, "#{:erlang.phash2({prot, cfg}, 4_294_967_296)}")}
+      end)
     )
 
-    # convert ip string to charlist
-    convert_ip_to_charlist(:safelist_ips)
-    convert_ip_to_charlist(:blocklist_ips)
+    # ip entries become client keys (PhoenixDDoS.IP.key/1), in place: a key is
+    # a valid entry, so init can run again
+    put_ip_keys(:safelist_ips)
+    put_ip_keys(:blocklist_ips)
 
     generate_checkers()
 
@@ -57,13 +70,11 @@ defmodule PhoenixDDoS.Configure do
   defp prepare_prot_cfgs({prot, cfg_src}) do
     cfg_src
     |> Map.new()
-    |> put_id()
     |> put_sentence()
     |> prot.prepare_config()
     # a prepare_config may split itself in a list of cfg
-    # if so, we need to regenerated id for each
     |> case do
-      cfgs when is_list(cfgs) -> cfgs |> Enum.map(fn cfg -> {prot, cfg |> put_id()} end)
+      cfgs when is_list(cfgs) -> cfgs |> Enum.map(fn cfg -> {prot, cfg} end)
       cfg -> {prot, cfg}
     end
   end
@@ -92,6 +103,11 @@ defmodule PhoenixDDoS.Configure do
         end,
         fn {_request_path, prot, cfg} -> {prot, cfg} end
       )
+      # a shared rule may list two paths with the same pattern ({:get, p} and
+      # {:head, p}): count it once per request
+      |> Map.new(fn {chunks, prots} ->
+        {chunks, Enum.uniq_by(prots, fn {_, cfg} -> cfg.id end)}
+      end)
 
     TemplateHelper.compile(
       %{
@@ -102,16 +118,27 @@ defmodule PhoenixDDoS.Configure do
     )
   end
 
-  def convert_ip_to_charlist(key) do
+  defp put_ip_keys(key) do
     Application.put_env(
       :phoenix_ddos,
       key,
       Application.get_env(:phoenix_ddos, key, [])
-      |> Enum.map(fn
-        ip when is_list(ip) -> ip
-        ip when is_binary(ip) -> String.to_charlist(ip)
-      end)
+      |> Enum.flat_map(&ip_key(key, &1))
+      |> Enum.uniq()
     )
+  end
+
+  # a bad entry must not take the whole protection down (configure may run at
+  # runtime, from a telemetry handler): it is logged and skipped
+  defp ip_key(key, entry) do
+    [PhoenixDDoS.IP.normalize!(entry)]
+  rescue
+    ArgumentError ->
+      # "" from a trailing comma in an env var: nothing to report
+      if String.trim(to_string(entry)) != "",
+        do: Logger.error("🛡️ PhoenixDDoS: invalid ip #{inspect(entry)} in #{key}, ignored")
+
+      []
   end
 
   # --------------------------------------------------------------
@@ -122,8 +149,11 @@ defmodule PhoenixDDoS.Configure do
     Application.loaded_applications()
     |> Enum.map(fn {app, _desc, _v} -> app end)
     |> Enum.map(fn app ->
-      {:ok, modules} = :application.get_key(app, :modules)
-      modules
+      # an app loaded without modules (or unloaded meanwhile) has none
+      case :application.get_key(app, :modules) do
+        {:ok, modules} -> modules
+        _ -> []
+      end
     end)
     |> List.flatten()
     |> Enum.filter(&phoenix_router?/1)
@@ -141,7 +171,16 @@ defmodule PhoenixDDoS.Configure do
   # --------------------------------------------------------------
 
   defp validate! do
-    :ok
+    case Application.fetch_env(:phoenix_ddos, :ipv6_prefix) do
+      :error ->
+        :ok
+
+      {:ok, p} when is_integer(p) and p in 0..128 ->
+        :ok
+
+      {:ok, other} ->
+        raise ArgumentError, ":ipv6_prefix must be an integer in 0..128, got: #{inspect(other)}"
+    end
   end
 
   # --------------------------------------------------------------
@@ -153,10 +192,6 @@ defmodule PhoenixDDoS.Configure do
     |> Enum.filter(fn {p, _} -> p == prot end)
   end
 
-  defp rand_id, do: :crypto.strong_rand_bytes(3) |> Base.encode64()
-
-  defp put_id(cfg), do: cfg |> Map.put(:id, rand_id())
-
   defp put_sentence(%{jail_time: nil} = cfg), do: cfg |> Map.put(:sentence, :block)
   defp put_sentence(%{jail_time: _} = cfg), do: cfg |> Map.put(:sentence, :jail)
 
@@ -167,7 +202,10 @@ defmodule PhoenixDDoS.Configure do
   # transform "/admin/:id/dashboard" to "_, "admin", _, "dashboard""
   # transform {:get, "/admin/:id/dashboard"} to ""GET", "admin", _, "dashboard""
   # empty segments are dropped, like the engine does on the request path
+  # the engine counts HEAD as GET (Phoenix serves HEAD with GET routes)
   @http_methods [:get, :post, :delete, :head, :put, :patch, :options]
+  defp path_to_pattern_match_chunk({:head, path}), do: path_to_pattern_match_chunk({:get, path})
+
   defp path_to_pattern_match_chunk({method, path}) when method in @http_methods do
     path_to_pattern_match_chunk(path, String.upcase("\"#{method}\""))
   end
@@ -179,7 +217,8 @@ defmodule PhoenixDDoS.Configure do
       for chunk <- String.split(path, "/"), chunk != "" do
         case chunk do
           <<":", _rest::binary>> -> "_"
-          chunk -> "\"#{chunk}\""
+          # an escaped string literal, the pattern is compiled as code
+          chunk -> inspect(chunk)
         end
       end
 

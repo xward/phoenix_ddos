@@ -1,14 +1,14 @@
 defmodule PhoenixDDoS.MixProject do
   use Mix.Project
 
-  @version "1.1.21"
+  @version "1.2.0"
   @source_url "https://github.com/xward/phoenix_ddos"
 
   def project do
     [
       app: :phoenix_ddos,
       version: @version,
-      elixir: "~> 1.10",
+      elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -69,7 +69,7 @@ defmodule PhoenixDDoS.MixProject do
   defp deps do
     [
       {:plug, "~> 1.14"},
-      {:cachex, ">= 3.0.0"},
+      {:cachex, "~> 4.0"},
       {:telemetry, ">= 0.0.0"},
       {:phoenix, ">= 1.5.0", runtime: false},
       {:dialyxir, "~> 1.0", only: [:test, :dev], runtime: false},

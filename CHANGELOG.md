@@ -1,5 +1,38 @@
 # PhoenixDDoS changelog
 
+## 1.2.0
+
+Security release: upgrading is recommended.
+
+### Breaking
+
+- path rules match the decoded `path_info` (HEAD counted as GET, POST also counted for PUT/PATCH/DELETE rules)
+- IPv6 clients are keyed by prefix (telemetry/jail ip shows e.g. "2001:db8::/64"), and IPv6 safelist/blocklist entries cover their whole prefix (`ipv6_prefix`, default 64)
+- IPv4-mapped IPv6 clients match IPv4 safelist/blocklist entries
+- an invalid `ipv6_prefix` raises at startup; invalid safelist/blocklist entries are logged and ignored (blank ones silently)
+- requires `cachex ~> 4.0` and Elixir ~> 1.13
+- `Jail.send/2`, `Jail.in_jail?/1`, `Jail.bail_out/1` and `Jail.suspicious_ip?/1` use the client key of the given address (IPv6 → its prefix, IPv4-mapped → IPv4) and also accept tuples; prefix keys as listed by `Jail.ips_in_jail/0` still work; an invalid address raises `ArgumentError`
+- `{:head, path}` rules also count GET requests to the path (HEAD is served by GET routes and counted as GET)
+
+### Fixes
+
+- fix: jail and suspicious-ip entries never expired with Cachex 4 (`ttl:` ignored, now `expire:`) — reported on GitHub
+- fix: the triggering counter is reset when an ip is jailed (no immediate re-jail on release)
+- fix: concurrent `Configure.init/0` calls (e.g. from telemetry handlers banning ips) no longer fail with "cannot define module PhoenixDDoS.Checkers"
+- fix: protection ids derive from their config, a reconfigure (`Configure.init/0`, e.g. after a ban) no longer resets the counters of unchanged protections, nor jails a request in flight for 0 second
+- fix: request path protections match the path as the Phoenix router sees it (empty segments, percent-encoding) — thanks @milanalexandre (#6)
+- fix: `Jail.suspicious_ip?/1` binary clause
+- fix: `phoenix_routers` introspection ignores loaded apps without modules
+- fix: templates declared as `@external_resource`
+
+### Features
+
+- feature: bounded caches (`max_entries` for the rate-limit store, `max_jail_entries` for jail and suspicious ips)
+- feature: `PhoenixDDoS.check_socket_ip/1` to protect sockets (channels `connect/3`, LiveView `on_mount`)
+- feature: jail log lines and Sentry alerts capped per minute (`max_jail_alerts_per_minute`)
+- docs: deployment behind a reverse proxy (`RemoteIp` with `proxies:`)
+- perf: the Phoenix route (used only in telemetry and Sentry metadata) is no longer resolved on every request, only when a `[:phoenix_ddos, :request, :new]` handler is attached or a Sentry alert is sent: less time per request, and rejected requests no longer pay for it
+
 ## 1.1.19
 
 - fix: phoenix router instropection too slow on big projects

@@ -8,9 +8,13 @@ defmodule PhoenixDDoS.TemplateHelper do
 
   require Logger
 
-  @templates [__DIR__, "*.eex"]
-             |> Path.join()
-             |> Path.wildcard()
+  @template_files [__DIR__, "*.eex"] |> Path.join() |> Path.wildcard()
+
+  for file_name <- @template_files do
+    @external_resource file_name
+  end
+
+  @templates @template_files
              |> Map.new(fn file_name ->
                {Path.basename(file_name, ".eex"), EEx.compile_file(file_name)}
              end)
